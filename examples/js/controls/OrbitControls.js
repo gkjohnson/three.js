@@ -1,10 +1,10 @@
 /**
  * Generated from 'examples\jsm\controls\OrbitControls.js'
- **/
+ */
 
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('../../../build/three.module.js')) :
-	typeof define === 'function' && define.amd ? define(['exports', '../../../build/three.module.js'], factory) :
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('three')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'three'], factory) :
 	(global = global || self, factory(global.THREE = global.THREE || {}, global.THREE));
 }(this, function (exports, three_module_js) { 'use strict';
 
