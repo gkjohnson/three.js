@@ -1,5 +1,5 @@
 /**
- * Generated from 'examples\jsm\controls\TrackballControls.js'
+ * Generated from 'examples/jsm/controls/TrackballControls.js'
  */
 
 (function (global, factory) {

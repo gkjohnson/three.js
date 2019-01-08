@@ -1,5 +1,5 @@
 /**
- * Generated from 'examples\jsm\loaders\OBJLoader.js'
+ * Generated from 'examples/jsm/loaders/OBJLoader.js'
  */
 
 (function (global, factory) {

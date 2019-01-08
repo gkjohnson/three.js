@@ -1,5 +1,5 @@
 /**
- * Generated from 'examples\jsm\controls\MapControls.js'
+ * Generated from 'examples/jsm/controls/MapControls.js'
  */
 
 (function (global, factory) {

@@ -1,5 +1,5 @@
 /**
- * Generated from 'examples\jsm\loaders\GLTFLoader.js'
+ * Generated from 'examples/jsm/loaders/GLTFLoader.js'
  */
 
 (function (global, factory) {

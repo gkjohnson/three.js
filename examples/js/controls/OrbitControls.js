@@ -1,5 +1,5 @@
 /**
- * Generated from 'examples\jsm\controls\OrbitControls.js'
+ * Generated from 'examples/jsm/controls/OrbitControls.js'
  */
 
 (function (global, factory) {
