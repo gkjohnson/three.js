@@ -6,7 +6,7 @@
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('three')) :
 	typeof define === 'function' && define.amd ? define(['exports', 'three'], factory) :
 	(global = global || self, factory(global.THREE = global.THREE || {}, global.THREE));
-}(this, function (exports, three_module_js) { 'use strict';
+}(this, function (exports, THREE) { 'use strict';
 
 	/**
 	 * @author Eberhard Graether / http://egraether.com/
@@ -47,31 +47,31 @@
 
 		// internals
 
-		this.target = new three_module_js.Vector3();
+		this.target = new THREE.Vector3();
 
 		var EPS = 0.000001;
 
-		var lastPosition = new three_module_js.Vector3();
+		var lastPosition = new THREE.Vector3();
 
 		var _state = STATE.NONE,
 			_prevState = STATE.NONE,
 
-			_eye = new three_module_js.Vector3(),
+			_eye = new THREE.Vector3(),
 
-			_movePrev = new three_module_js.Vector2(),
-			_moveCurr = new three_module_js.Vector2(),
+			_movePrev = new THREE.Vector2(),
+			_moveCurr = new THREE.Vector2(),
 
-			_lastAxis = new three_module_js.Vector3(),
+			_lastAxis = new THREE.Vector3(),
 			_lastAngle = 0,
 
-			_zoomStart = new three_module_js.Vector2(),
-			_zoomEnd = new three_module_js.Vector2(),
+			_zoomStart = new THREE.Vector2(),
+			_zoomEnd = new THREE.Vector2(),
 
 			_touchZoomDistanceStart = 0,
 			_touchZoomDistanceEnd = 0,
 
-			_panStart = new three_module_js.Vector2(),
-			_panEnd = new three_module_js.Vector2();
+			_panStart = new THREE.Vector2(),
+			_panEnd = new THREE.Vector2();
 
 		// for reset
 
@@ -113,7 +113,7 @@
 
 		var getMouseOnScreen = ( function () {
 
-			var vector = new three_module_js.Vector2();
+			var vector = new THREE.Vector2();
 
 			return function getMouseOnScreen( pageX, pageY ) {
 
@@ -130,7 +130,7 @@
 
 		var getMouseOnCircle = ( function () {
 
-			var vector = new three_module_js.Vector2();
+			var vector = new THREE.Vector2();
 
 			return function getMouseOnCircle( pageX, pageY ) {
 
@@ -147,12 +147,12 @@
 
 		this.rotateCamera = ( function () {
 
-			var axis = new three_module_js.Vector3(),
-				quaternion = new three_module_js.Quaternion(),
-				eyeDirection = new three_module_js.Vector3(),
-				objectUpDirection = new three_module_js.Vector3(),
-				objectSidewaysDirection = new three_module_js.Vector3(),
-				moveDirection = new three_module_js.Vector3(),
+			var axis = new THREE.Vector3(),
+				quaternion = new THREE.Quaternion(),
+				eyeDirection = new THREE.Vector3(),
+				objectUpDirection = new THREE.Vector3(),
+				objectSidewaysDirection = new THREE.Vector3(),
+				moveDirection = new THREE.Vector3(),
 				angle;
 
 			return function rotateCamera() {
@@ -237,9 +237,9 @@
 
 		this.panCamera = ( function () {
 
-			var mouseChange = new three_module_js.Vector2(),
-				objectUp = new three_module_js.Vector3(),
-				pan = new three_module_js.Vector3();
+			var mouseChange = new THREE.Vector2(),
+				objectUp = new THREE.Vector3(),
+				pan = new THREE.Vector3();
 
 			return function panCamera() {
 
@@ -625,11 +625,9 @@
 
 	};
 
-	TrackballControls.prototype = Object.create( three_module_js.EventDispatcher.prototype );
+	TrackballControls.prototype = Object.create( THREE.EventDispatcher.prototype );
 	TrackballControls.prototype.constructor = THREE.TrackballControls;
 
 	exports.TrackballControls = TrackballControls;
-
-	Object.defineProperty(exports, '__esModule', { value: true });
 
 }));

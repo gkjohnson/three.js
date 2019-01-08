@@ -6,7 +6,7 @@
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('three')) :
 	typeof define === 'function' && define.amd ? define(['exports', 'three'], factory) :
 	(global = global || self, factory(global.THREE = global.THREE || {}, global.THREE));
-}(this, function (exports, three_module_js) { 'use strict';
+}(this, function (exports, THREE) { 'use strict';
 
 	/**
 	 * @author Rich Tibbett / https://github.com/richtr
@@ -20,7 +20,7 @@
 
 		function GLTFLoader( manager ) {
 
-			this.manager = ( manager !== undefined ) ? manager : three_module_js.DefaultLoadingManager;
+			this.manager = ( manager !== undefined ) ? manager : THREE.DefaultLoadingManager;
 			this.dracoLoader = null;
 
 		}
@@ -47,7 +47,7 @@
 
 				} else {
 
-					resourcePath = three_module_js.LoaderUtils.extractUrlBase( url );
+					resourcePath = THREE.LoaderUtils.extractUrlBase( url );
 
 				}
 
@@ -73,7 +73,7 @@
 
 				};
 
-				var loader = new three_module_js.FileLoader( scope.manager );
+				var loader = new THREE.FileLoader( scope.manager );
 
 				loader.setPath( this.path );
 				loader.setResponseType( 'arraybuffer' );
@@ -139,7 +139,7 @@
 
 				} else {
 
-					var magic = three_module_js.LoaderUtils.decodeText( new Uint8Array( data, 0, 4 ) );
+					var magic = THREE.LoaderUtils.decodeText( new Uint8Array( data, 0, 4 ) );
 
 					if ( magic === BINARY_EXTENSION_HEADER_MAGIC ) {
 
@@ -158,7 +158,7 @@
 
 					} else {
 
-						content = three_module_js.LoaderUtils.decodeText( new Uint8Array( data ) );
+						content = THREE.LoaderUtils.decodeText( new Uint8Array( data ) );
 
 					}
 
@@ -339,7 +339,7 @@
 			var lightDef = this.lightDefs[ lightIndex ];
 			var lightNode;
 
-			var color = new three_module_js.Color( 0xffffff );
+			var color = new THREE.Color( 0xffffff );
 			if ( lightDef.color !== undefined ) color.fromArray( lightDef.color );
 
 			var range = lightDef.range !== undefined ? lightDef.range : 0;
@@ -347,23 +347,23 @@
 			switch ( lightDef.type ) {
 
 				case 'directional':
-					lightNode = new three_module_js.DirectionalLight( color );
+					lightNode = new THREE.DirectionalLight( color );
 					lightNode.target.position.set( 0, 0, -1 );
 					lightNode.add( lightNode.target );
 					break;
 
 				case 'point':
-					lightNode = new three_module_js.PointLight( color );
+					lightNode = new THREE.PointLight( color );
 					lightNode.distance = range;
 					break;
 
 				case 'spot':
-					lightNode = new three_module_js.SpotLight( color );
+					lightNode = new THREE.SpotLight( color );
 					lightNode.distance = range;
 					// Handle spotlight properties.
 					lightDef.spot = lightDef.spot || {};
 					lightDef.spot.innerConeAngle = lightDef.spot.innerConeAngle !== undefined ? lightDef.spot.innerConeAngle : 0;
-					lightDef.spot.outerConeAngle = lightDef.spot.outerConeAngle !== undefined ? lightDef.spot.outerConeAngle : three_module_js.Math.PI / 4.0;
+					lightDef.spot.outerConeAngle = lightDef.spot.outerConeAngle !== undefined ? lightDef.spot.outerConeAngle : THREE.Math.PI / 4.0;
 					lightNode.angle = lightDef.spot.outerConeAngle;
 					lightNode.penumbra = 1.0 - lightDef.spot.innerConeAngle / lightDef.spot.outerConeAngle;
 					lightNode.target.position.set( 0, 0, -1 );
@@ -398,7 +398,7 @@
 
 		GLTFMaterialsUnlitExtension.prototype.getMaterialType = function ( material ) {
 
-			return three_module_js.MeshBasicMaterial;
+			return THREE.MeshBasicMaterial;
 
 		};
 
@@ -406,7 +406,7 @@
 
 			var pending = [];
 
-			materialParams.color = new three_module_js.Color( 1.0, 1.0, 1.0 );
+			materialParams.color = new THREE.Color( 1.0, 1.0, 1.0 );
 			materialParams.opacity = 1.0;
 
 			var metallicRoughness = material.pbrMetallicRoughness;
@@ -450,7 +450,7 @@
 			var headerView = new DataView( data, 0, BINARY_EXTENSION_HEADER_LENGTH );
 
 			this.header = {
-				magic: three_module_js.LoaderUtils.decodeText( new Uint8Array( data.slice( 0, 4 ) ) ),
+				magic: THREE.LoaderUtils.decodeText( new Uint8Array( data.slice( 0, 4 ) ) ),
 				version: headerView.getUint32( 4, true ),
 				length: headerView.getUint32( 8, true )
 			};
@@ -479,7 +479,7 @@
 				if ( chunkType === BINARY_EXTENSION_CHUNK_TYPES.JSON ) {
 
 					var contentArray = new Uint8Array( data, BINARY_EXTENSION_HEADER_LENGTH + chunkIndex, chunkLength );
-					this.content = three_module_js.LoaderUtils.decodeText( contentArray );
+					this.content = THREE.LoaderUtils.decodeText( contentArray );
 
 				} else if ( chunkType === BINARY_EXTENSION_CHUNK_TYPES.BIN ) {
 
@@ -663,7 +663,7 @@
 
 				getMaterialType: function () {
 
-					return three_module_js.ShaderMaterial;
+					return THREE.ShaderMaterial;
 
 				},
 
@@ -671,9 +671,9 @@
 
 					var pbrSpecularGlossiness = material.extensions[ this.name ];
 
-					var shader = three_module_js.ShaderLib[ 'standard' ];
+					var shader = THREE.ShaderLib[ 'standard' ];
 
-					var uniforms = three_module_js.UniformsUtils.clone( shader.uniforms );
+					var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 
 					var specularMapParsFragmentChunk = [
 						'#ifdef USE_SPECULARMAP',
@@ -727,7 +727,7 @@
 					delete uniforms.roughnessMap;
 					delete uniforms.metalnessMap;
 
-					uniforms.specular = { value: new three_module_js.Color().setHex( 0x111111 ) };
+					uniforms.specular = { value: new THREE.Color().setHex( 0x111111 ) };
 					uniforms.glossiness = { value: 0.5 };
 					uniforms.specularMap = { value: null };
 					uniforms.glossinessMap = { value: null };
@@ -737,7 +737,7 @@
 					params.uniforms = uniforms;
 					params.defines = { 'STANDARD': '' };
 
-					params.color = new three_module_js.Color( 1.0, 1.0, 1.0 );
+					params.color = new THREE.Color( 1.0, 1.0, 1.0 );
 					params.opacity = 1.0;
 
 					var pending = [];
@@ -757,9 +757,9 @@
 
 					}
 
-					params.emissive = new three_module_js.Color( 0.0, 0.0, 0.0 );
+					params.emissive = new THREE.Color( 0.0, 0.0, 0.0 );
 					params.glossiness = pbrSpecularGlossiness.glossinessFactor !== undefined ? pbrSpecularGlossiness.glossinessFactor : 1.0;
-					params.specular = new three_module_js.Color( 1.0, 1.0, 1.0 );
+					params.specular = new THREE.Color( 1.0, 1.0, 1.0 );
 
 					if ( Array.isArray( pbrSpecularGlossiness.specularFactor ) ) {
 
@@ -783,7 +783,7 @@
 
 					// setup material properties based on MeshStandardMaterial for Specular-Glossiness
 
-					var material = new three_module_js.ShaderMaterial( {
+					var material = new THREE.ShaderMaterial( {
 						defines: params.defines,
 						vertexShader: params.vertexShader,
 						fragmentShader: params.fragmentShader,
@@ -1018,11 +1018,11 @@
 		// Specification: https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/README.md#appendix-c-spline-interpolation
 		function GLTFCubicSplineInterpolant( parameterPositions, sampleValues, sampleSize, resultBuffer ) {
 
-			three_module_js.Interpolant.call( this, parameterPositions, sampleValues, sampleSize, resultBuffer );
+			THREE.Interpolant.call( this, parameterPositions, sampleValues, sampleSize, resultBuffer );
 
 		}
 
-		GLTFCubicSplineInterpolant.prototype = Object.create( three_module_js.Interpolant.prototype );
+		GLTFCubicSplineInterpolant.prototype = Object.create( THREE.Interpolant.prototype );
 		GLTFCubicSplineInterpolant.prototype.constructor = GLTFCubicSplineInterpolant;
 
 		GLTFCubicSplineInterpolant.prototype.copySampleValue_ = function ( index ) {
@@ -1120,12 +1120,12 @@
 		var WEBGL_TYPE = {
 			5126: Number,
 			//35674: THREE.Matrix2,
-			35675: three_module_js.Matrix3,
-			35676: three_module_js.Matrix4,
-			35664: three_module_js.Vector2,
-			35665: three_module_js.Vector3,
-			35666: three_module_js.Vector4,
-			35678: three_module_js.Texture
+			35675: THREE.Matrix3,
+			35676: THREE.Matrix4,
+			35664: THREE.Vector2,
+			35665: THREE.Vector3,
+			35666: THREE.Vector4,
+			35678: THREE.Texture
 		};
 
 		var WEBGL_COMPONENT_TYPES = {
@@ -1138,55 +1138,55 @@
 		};
 
 		var WEBGL_FILTERS = {
-			9728: three_module_js.NearestFilter,
-			9729: three_module_js.LinearFilter,
-			9984: three_module_js.NearestMipMapNearestFilter,
-			9985: three_module_js.LinearMipMapNearestFilter,
-			9986: three_module_js.NearestMipMapLinearFilter,
-			9987: three_module_js.LinearMipMapLinearFilter
+			9728: THREE.NearestFilter,
+			9729: THREE.LinearFilter,
+			9984: THREE.NearestMipMapNearestFilter,
+			9985: THREE.LinearMipMapNearestFilter,
+			9986: THREE.NearestMipMapLinearFilter,
+			9987: THREE.LinearMipMapLinearFilter
 		};
 
 		var WEBGL_WRAPPINGS = {
-			33071: three_module_js.ClampToEdgeWrapping,
-			33648: three_module_js.MirroredRepeatWrapping,
-			10497: three_module_js.RepeatWrapping
+			33071: THREE.ClampToEdgeWrapping,
+			33648: THREE.MirroredRepeatWrapping,
+			10497: THREE.RepeatWrapping
 		};
 
 		var WEBGL_SIDES = {
-			1028: three_module_js.BackSide, // Culling front
-			1029: three_module_js.FrontSide // Culling back
+			1028: THREE.BackSide, // Culling front
+			1029: THREE.FrontSide // Culling back
 			//1032: THREE.NoSide   // Culling front and back, what to do?
 		};
 
 		var WEBGL_DEPTH_FUNCS = {
-			512: three_module_js.NeverDepth,
-			513: three_module_js.LessDepth,
-			514: three_module_js.EqualDepth,
-			515: three_module_js.LessEqualDepth,
-			516: three_module_js.GreaterEqualDepth,
-			517: three_module_js.NotEqualDepth,
-			518: three_module_js.GreaterEqualDepth,
-			519: three_module_js.AlwaysDepth
+			512: THREE.NeverDepth,
+			513: THREE.LessDepth,
+			514: THREE.EqualDepth,
+			515: THREE.LessEqualDepth,
+			516: THREE.GreaterEqualDepth,
+			517: THREE.NotEqualDepth,
+			518: THREE.GreaterEqualDepth,
+			519: THREE.AlwaysDepth
 		};
 
 		var WEBGL_BLEND_EQUATIONS = {
-			32774: three_module_js.AddEquation,
-			32778: three_module_js.SubtractEquation,
-			32779: three_module_js.ReverseSubtractEquation
+			32774: THREE.AddEquation,
+			32778: THREE.SubtractEquation,
+			32779: THREE.ReverseSubtractEquation
 		};
 
 		var WEBGL_BLEND_FUNCS = {
-			0: three_module_js.ZeroFactor,
-			1: three_module_js.OneFactor,
-			768: three_module_js.SrcColorFactor,
-			769: three_module_js.OneMinusSrcColorFactor,
-			770: three_module_js.SrcAlphaFactor,
-			771: three_module_js.OneMinusSrcAlphaFactor,
-			772: three_module_js.DstAlphaFactor,
-			773: three_module_js.OneMinusDstAlphaFactor,
-			774: three_module_js.DstColorFactor,
-			775: three_module_js.OneMinusDstColorFactor,
-			776: three_module_js.SrcAlphaSaturateFactor
+			0: THREE.ZeroFactor,
+			1: THREE.OneFactor,
+			768: THREE.SrcColorFactor,
+			769: THREE.OneMinusSrcColorFactor,
+			770: THREE.SrcAlphaFactor,
+			771: THREE.OneMinusSrcAlphaFactor,
+			772: THREE.DstAlphaFactor,
+			773: THREE.OneMinusDstAlphaFactor,
+			774: THREE.DstColorFactor,
+			775: THREE.OneMinusDstColorFactor,
+			776: THREE.SrcAlphaSaturateFactor
 			// The followings are not supported by Three.js yet
 			//32769: CONSTANT_COLOR,
 			//32770: ONE_MINUS_CONSTANT_COLOR,
@@ -1222,12 +1222,12 @@
 		};
 
 		var INTERPOLATION = {
-			CUBICSPLINE: three_module_js.InterpolateSmooth, // We use custom interpolation GLTFCubicSplineInterpolation for CUBICSPLINE.
+			CUBICSPLINE: THREE.InterpolateSmooth, // We use custom interpolation GLTFCubicSplineInterpolation for CUBICSPLINE.
 			                                      // KeyframeTrack.optimize() can't handle glTF Cubic Spline output values layout,
 			                                      // using InterpolateSmooth for KeyframeTrack instantiation to prevent optimization.
 			                                      // See KeyframeTrack.optimize() for the detail.
-			LINEAR: three_module_js.InterpolateLinear,
-			STEP: three_module_js.InterpolateDiscrete
+			LINEAR: THREE.InterpolateLinear,
+			STEP: THREE.InterpolateDiscrete
 		};
 
 		var STATES_ENABLES = {
@@ -1246,8 +1246,8 @@
 		};
 
 		var MIME_TYPE_FORMATS = {
-			'image/png': three_module_js.RGBAFormat,
-			'image/jpeg': three_module_js.RGBFormat
+			'image/png': THREE.RGBAFormat,
+			'image/jpeg': THREE.RGBFormat
 		};
 
 		/* UTILITY FUNCTIONS */
@@ -1276,14 +1276,14 @@
 		 */
 		function createDefaultMaterial() {
 
-			return new three_module_js.MeshStandardMaterial( {
+			return new THREE.MeshStandardMaterial( {
 				color: 0xFFFFFF,
 				emissive: 0x000000,
 				metalness: 1,
 				roughness: 1,
 				transparent: false,
 				depthTest: true,
-				side: three_module_js.FrontSide
+				side: THREE.FrontSide
 			} );
 
 		}
@@ -1630,7 +1630,7 @@
 
 				}
 
-				return new three_module_js.BufferAttribute( array, itemSize, attribute.normalized );
+				return new THREE.BufferAttribute( array, itemSize, attribute.normalized );
 
 			}
 
@@ -1696,10 +1696,10 @@
 			this.multiplePrimitivesCache = [];
 			this.multiPassGeometryCache = [];
 
-			this.textureLoader = new three_module_js.TextureLoader( this.options.manager );
+			this.textureLoader = new THREE.TextureLoader( this.options.manager );
 			this.textureLoader.setCrossOrigin( this.options.crossOrigin );
 
-			this.fileLoader = new three_module_js.FileLoader( this.options.manager );
+			this.fileLoader = new THREE.FileLoader( this.options.manager );
 			this.fileLoader.setResponseType( 'arraybuffer' );
 
 		}
@@ -2058,13 +2058,13 @@
 						array = new TypedArray( bufferView );
 
 						// Integer parameters to IB/IBA are in array elements, not bytes.
-						ib = new three_module_js.InterleavedBuffer( array, byteStride / elementBytes );
+						ib = new THREE.InterleavedBuffer( array, byteStride / elementBytes );
 
 						parser.cache.add( ibCacheKey, ib );
 
 					}
 
-					bufferAttribute = new three_module_js.InterleavedBufferAttribute( ib, itemSize, byteOffset / elementBytes, normalized );
+					bufferAttribute = new THREE.InterleavedBufferAttribute( ib, itemSize, byteOffset / elementBytes, normalized );
 
 				} else {
 
@@ -2078,7 +2078,7 @@
 
 					}
 
-					bufferAttribute = new three_module_js.BufferAttribute( array, itemSize, normalized );
+					bufferAttribute = new THREE.BufferAttribute( array, itemSize, normalized );
 
 				}
 
@@ -2173,7 +2173,7 @@
 
 				// Load Texture resource.
 
-				var loader = three_module_js.Loader.Handlers.get( sourceURI );
+				var loader = THREE.Loader.Handlers.get( sourceURI );
 
 				if ( ! loader ) {
 
@@ -2213,10 +2213,10 @@
 				var samplers = json.samplers || {};
 				var sampler = samplers[ textureDef.sampler ] || {};
 
-				texture.magFilter = WEBGL_FILTERS[ sampler.magFilter ] || three_module_js.LinearFilter;
-				texture.minFilter = WEBGL_FILTERS[ sampler.minFilter ] || three_module_js.LinearMipMapLinearFilter;
-				texture.wrapS = WEBGL_WRAPPINGS[ sampler.wrapS ] || three_module_js.RepeatWrapping;
-				texture.wrapT = WEBGL_WRAPPINGS[ sampler.wrapT ] || three_module_js.RepeatWrapping;
+				texture.magFilter = WEBGL_FILTERS[ sampler.magFilter ] || THREE.LinearFilter;
+				texture.minFilter = WEBGL_FILTERS[ sampler.minFilter ] || THREE.LinearMipMapLinearFilter;
+				texture.wrapS = WEBGL_WRAPPINGS[ sampler.wrapS ] || THREE.RepeatWrapping;
+				texture.wrapT = WEBGL_WRAPPINGS[ sampler.wrapT ] || THREE.RepeatWrapping;
 
 				return texture;
 
@@ -2290,11 +2290,11 @@
 				// Specification:
 				// https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material
 
-				materialType = three_module_js.MeshStandardMaterial;
+				materialType = THREE.MeshStandardMaterial;
 
 				var metallicRoughness = materialDef.pbrMetallicRoughness || {};
 
-				materialParams.color = new three_module_js.Color( 1.0, 1.0, 1.0 );
+				materialParams.color = new THREE.Color( 1.0, 1.0, 1.0 );
 				materialParams.opacity = 1.0;
 
 				if ( Array.isArray( metallicRoughness.baseColorFactor ) ) {
@@ -2326,7 +2326,7 @@
 
 			if ( materialDef.doubleSided === true ) {
 
-				materialParams.side = three_module_js.DoubleSide;
+				materialParams.side = THREE.DoubleSide;
 
 			}
 
@@ -2348,11 +2348,11 @@
 
 			}
 
-			if ( materialDef.normalTexture !== undefined && materialType !== three_module_js.MeshBasicMaterial ) {
+			if ( materialDef.normalTexture !== undefined && materialType !== THREE.MeshBasicMaterial ) {
 
 				pending.push( parser.assignTexture( materialParams, 'normalMap', materialDef.normalTexture ) );
 
-				materialParams.normalScale = new three_module_js.Vector2( 1, 1 );
+				materialParams.normalScale = new THREE.Vector2( 1, 1 );
 
 				if ( materialDef.normalTexture.scale !== undefined ) {
 
@@ -2362,7 +2362,7 @@
 
 			}
 
-			if ( materialDef.occlusionTexture !== undefined && materialType !== three_module_js.MeshBasicMaterial ) {
+			if ( materialDef.occlusionTexture !== undefined && materialType !== THREE.MeshBasicMaterial ) {
 
 				pending.push( parser.assignTexture( materialParams, 'aoMap', materialDef.occlusionTexture ) );
 
@@ -2374,13 +2374,13 @@
 
 			}
 
-			if ( materialDef.emissiveFactor !== undefined && materialType !== three_module_js.MeshBasicMaterial ) {
+			if ( materialDef.emissiveFactor !== undefined && materialType !== THREE.MeshBasicMaterial ) {
 
-				materialParams.emissive = new three_module_js.Color().fromArray( materialDef.emissiveFactor );
+				materialParams.emissive = new THREE.Color().fromArray( materialDef.emissiveFactor );
 
 			}
 
-			if ( materialDef.emissiveTexture !== undefined && materialType !== three_module_js.MeshBasicMaterial ) {
+			if ( materialDef.emissiveTexture !== undefined && materialType !== THREE.MeshBasicMaterial ) {
 
 				pending.push( parser.assignTexture( materialParams, 'emissiveMap', materialDef.emissiveTexture ) );
 
@@ -2390,7 +2390,7 @@
 
 				var material;
 
-				if ( materialType === three_module_js.ShaderMaterial ) {
+				if ( materialType === THREE.ShaderMaterial ) {
 
 					material = extensions[ EXTENSIONS.KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS ].createMaterial( materialParams );
 
@@ -2411,9 +2411,9 @@
 				}
 
 				// baseColorTexture, emissiveTexture, and specularGlossinessTexture use sRGB encoding.
-				if ( material.map ) material.map.encoding = three_module_js.sRGBEncoding;
-				if ( material.emissiveMap ) material.emissiveMap.encoding = three_module_js.sRGBEncoding;
-				if ( material.specularMap ) material.specularMap.encoding = three_module_js.sRGBEncoding;
+				if ( material.map ) material.map.encoding = THREE.sRGBEncoding;
+				if ( material.emissiveMap ) material.emissiveMap.encoding = THREE.sRGBEncoding;
+				if ( material.specularMap ) material.specularMap.encoding = THREE.sRGBEncoding;
 
 				assignExtrasToUserData( material, materialDef );
 
@@ -2555,7 +2555,7 @@
 					} else {
 
 						// Otherwise create a new geometry
-						geometryPromise = addPrimitiveAttributes( new three_module_js.BufferGeometry(), primitive, parser );
+						geometryPromise = addPrimitiveAttributes( new THREE.BufferGeometry(), primitive, parser );
 
 					}
 
@@ -2582,7 +2582,7 @@
 
 					// Cloning geometry because of index override.
 					// Attributes can be reused so cloning by myself here.
-					var geometry = new three_module_js.BufferGeometry();
+					var geometry = new THREE.BufferGeometry();
 
 					geometry.name = baseGeometry.name;
 					geometry.userData = baseGeometry.userData;
@@ -2712,36 +2712,36 @@
 
 							// .isSkinnedMesh isn't in glTF spec. See .markDefs()
 							mesh = meshDef.isSkinnedMesh === true
-								? new three_module_js.SkinnedMesh( geometry, material )
-								: new three_module_js.Mesh( geometry, material );
+								? new THREE.SkinnedMesh( geometry, material )
+								: new THREE.Mesh( geometry, material );
 
 							if ( mesh.isSkinnedMesh === true ) mesh.normalizeSkinWeights(); // #15319
 
 							if ( primitive.mode === WEBGL_CONSTANTS.TRIANGLE_STRIP ) {
 
-								mesh.drawMode = three_module_js.TriangleStripDrawMode;
+								mesh.drawMode = THREE.TriangleStripDrawMode;
 
 							} else if ( primitive.mode === WEBGL_CONSTANTS.TRIANGLE_FAN ) {
 
-								mesh.drawMode = three_module_js.TriangleFanDrawMode;
+								mesh.drawMode = THREE.TriangleFanDrawMode;
 
 							}
 
 						} else if ( primitive.mode === WEBGL_CONSTANTS.LINES ) {
 
-							mesh = new three_module_js.LineSegments( geometry, material );
+							mesh = new THREE.LineSegments( geometry, material );
 
 						} else if ( primitive.mode === WEBGL_CONSTANTS.LINE_STRIP ) {
 
-							mesh = new three_module_js.Line( geometry, material );
+							mesh = new THREE.Line( geometry, material );
 
 						} else if ( primitive.mode === WEBGL_CONSTANTS.LINE_LOOP ) {
 
-							mesh = new three_module_js.LineLoop( geometry, material );
+							mesh = new THREE.LineLoop( geometry, material );
 
 						} else if ( primitive.mode === WEBGL_CONSTANTS.POINTS ) {
 
-							mesh = new three_module_js.Points( geometry, material );
+							mesh = new THREE.Points( geometry, material );
 
 						} else {
 
@@ -2785,8 +2785,8 @@
 
 								if ( ! pointsMaterial ) {
 
-									pointsMaterial = new three_module_js.PointsMaterial();
-									three_module_js.Material.prototype.copy.call( pointsMaterial, material );
+									pointsMaterial = new THREE.PointsMaterial();
+									THREE.Material.prototype.copy.call( pointsMaterial, material );
 									pointsMaterial.color.copy( material.color );
 									pointsMaterial.map = material.map;
 									pointsMaterial.lights = false; // PointsMaterial doesn't support lights yet
@@ -2805,8 +2805,8 @@
 
 								if ( ! lineMaterial ) {
 
-									lineMaterial = new three_module_js.LineBasicMaterial();
-									three_module_js.Material.prototype.copy.call( lineMaterial, material );
+									lineMaterial = new THREE.LineBasicMaterial();
+									THREE.Material.prototype.copy.call( lineMaterial, material );
 									lineMaterial.color.copy( material.color );
 									lineMaterial.lights = false; // LineBasicMaterial doesn't support lights yet
 
@@ -2839,7 +2839,7 @@
 										: material.clone();
 
 									if ( useSkinning ) cachedMaterial.skinning = true;
-									if ( useVertexColors ) cachedMaterial.vertexColors = three_module_js.VertexColors;
+									if ( useVertexColors ) cachedMaterial.vertexColors = THREE.VertexColors;
 									if ( useFlatShading ) cachedMaterial.flatShading = true;
 									if ( useMorphTargets ) cachedMaterial.morphTargets = true;
 									if ( useMorphNormals ) cachedMaterial.morphNormals = true;
@@ -2859,7 +2859,7 @@
 							if ( material.aoMap && geometry.attributes.uv2 === undefined && geometry.attributes.uv !== undefined ) {
 
 								console.log( 'THREE.GLTFLoader: Duplicating UVs to support aoMap.' );
-								geometry.addAttribute( 'uv2', new three_module_js.BufferAttribute( geometry.attributes.uv.array, 2 ) );
+								geometry.addAttribute( 'uv2', new THREE.BufferAttribute( geometry.attributes.uv.array, 2 ) );
 
 							}
 
@@ -2882,7 +2882,7 @@
 
 					}
 
-					var group = new three_module_js.Group();
+					var group = new THREE.Group();
 
 					for ( var i = 0, il = meshes.length; i < il; i ++ ) {
 
@@ -2918,11 +2918,11 @@
 
 			if ( cameraDef.type === 'perspective' ) {
 
-				camera = new three_module_js.PerspectiveCamera( three_module_js.Math.radToDeg( params.yfov ), params.aspectRatio || 1, params.znear || 1, params.zfar || 2e6 );
+				camera = new THREE.PerspectiveCamera( THREE.Math.radToDeg( params.yfov ), params.aspectRatio || 1, params.znear || 1, params.zfar || 2e6 );
 
 			} else if ( cameraDef.type === 'orthographic' ) {
 
-				camera = new three_module_js.OrthographicCamera( params.xmag / - 2, params.xmag / 2, params.ymag / 2, params.ymag / - 2, params.znear, params.zfar );
+				camera = new THREE.OrthographicCamera( params.xmag / - 2, params.xmag / 2, params.ymag / 2, params.ymag / - 2, params.znear, params.zfar );
 
 			}
 
@@ -3032,26 +3032,26 @@
 
 						case PATH_PROPERTIES.weights:
 
-							TypedKeyframeTrack = three_module_js.NumberKeyframeTrack;
+							TypedKeyframeTrack = THREE.NumberKeyframeTrack;
 							break;
 
 						case PATH_PROPERTIES.rotation:
 
-							TypedKeyframeTrack = three_module_js.QuaternionKeyframeTrack;
+							TypedKeyframeTrack = THREE.QuaternionKeyframeTrack;
 							break;
 
 						case PATH_PROPERTIES.position:
 						case PATH_PROPERTIES.scale:
 						default:
 
-							TypedKeyframeTrack = three_module_js.VectorKeyframeTrack;
+							TypedKeyframeTrack = THREE.VectorKeyframeTrack;
 							break;
 
 					}
 
 					var targetName = node.name ? node.name : node.uuid;
 
-					var interpolation = sampler.interpolation !== undefined ? INTERPOLATION[ sampler.interpolation ] : three_module_js.InterpolateLinear;
+					var interpolation = sampler.interpolation !== undefined ? INTERPOLATION[ sampler.interpolation ] : THREE.InterpolateLinear;
 
 					var targetNames = [];
 
@@ -3084,8 +3084,8 @@
 
 						var track = new TypedKeyframeTrack(
 							targetNames[ j ] + '.' + PATH_PROPERTIES[ target.path ],
-							three_module_js.AnimationUtils.arraySlice( inputAccessor.array, 0 ),
-							three_module_js.AnimationUtils.arraySlice( outputAccessor.array, 0 ),
+							THREE.AnimationUtils.arraySlice( inputAccessor.array, 0 ),
+							THREE.AnimationUtils.arraySlice( outputAccessor.array, 0 ),
 							interpolation
 						);
 
@@ -3117,7 +3117,7 @@
 
 				var name = animationDef.name !== undefined ? animationDef.name : 'animation_' + animationIndex;
 
-				return new three_module_js.AnimationClip( name, undefined, tracks );
+				return new THREE.AnimationClip( name, undefined, tracks );
 
 			} );
 
@@ -3144,7 +3144,7 @@
 				// .isBone isn't in glTF spec. See .markDefs
 				if ( nodeDef.isBone === true ) {
 
-					return Promise.resolve( new three_module_js.Bone() );
+					return Promise.resolve( new THREE.Bone() );
 
 				} else if ( nodeDef.mesh !== undefined ) {
 
@@ -3208,7 +3208,7 @@
 
 				} else {
 
-					return Promise.resolve( new three_module_js.Object3D() );
+					return Promise.resolve( new THREE.Object3D() );
 
 				}
 
@@ -3216,7 +3216,7 @@
 
 				if ( nodeDef.name !== undefined ) {
 
-					node.name = three_module_js.PropertyBinding.sanitizeNodeName( nodeDef.name );
+					node.name = THREE.PropertyBinding.sanitizeNodeName( nodeDef.name );
 
 				}
 
@@ -3226,7 +3226,7 @@
 
 				if ( nodeDef.matrix !== undefined ) {
 
-					var matrix = new three_module_js.Matrix4();
+					var matrix = new THREE.Matrix4();
 					matrix.fromArray( nodeDef.matrix );
 					node.applyMatrix( matrix );
 
@@ -3312,7 +3312,7 @@
 
 									bones.push( jointNode );
 
-									var mat = new three_module_js.Matrix4();
+									var mat = new THREE.Matrix4();
 
 									if ( skinEntry.inverseBindMatrices !== undefined ) {
 
@@ -3330,7 +3330,7 @@
 
 							}
 
-							mesh.bind( new three_module_js.Skeleton( bones, boneInverses ), mesh.matrixWorld );
+							mesh.bind( new THREE.Skeleton( bones, boneInverses ), mesh.matrixWorld );
 
 						}
 
@@ -3372,7 +3372,7 @@
 				var sceneDef = this.json.scenes[ sceneIndex ];
 				var parser = this;
 
-				var scene = new three_module_js.Scene();
+				var scene = new THREE.Scene();
 				if ( sceneDef.name !== undefined ) scene.name = sceneDef.name;
 
 				assignExtrasToUserData( scene, sceneDef );
@@ -3404,7 +3404,5 @@
 	} )();
 
 	exports.GLTFLoader = GLTFLoader;
-
-	Object.defineProperty(exports, '__esModule', { value: true });
 
 }));

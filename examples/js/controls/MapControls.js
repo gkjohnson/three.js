@@ -6,7 +6,7 @@
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('three')) :
 	typeof define === 'function' && define.amd ? define(['exports', 'three'], factory) :
 	(global = global || self, factory(global.THREE = global.THREE || {}, global.THREE));
-}(this, function (exports, three_module_js) { 'use strict';
+}(this, function (exports, THREE) { 'use strict';
 
 	/**
 	 * @author qiao / https://github.com/qiao
@@ -27,7 +27,7 @@
 		this.enabled = true;
 
 		// "target" sets the location of focus, where the object orbits around
-		this.target = new three_module_js.Vector3();
+		this.target = new THREE.Vector3();
 
 		// How far you can dolly in and out ( PerspectiveCamera only )
 		this.minDistance = 0;
@@ -79,7 +79,7 @@
 		this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40 };
 
 		// Mouse buttons
-		this.mouseButtons = { LEFT: three_module_js.MOUSE.LEFT, MIDDLE: three_module_js.MOUSE.MIDDLE, RIGHT: three_module_js.MOUSE.RIGHT };
+		this.mouseButtons = { LEFT: THREE.MOUSE.LEFT, MIDDLE: THREE.MOUSE.MIDDLE, RIGHT: THREE.MOUSE.RIGHT };
 
 		// for reset
 		this.target0 = this.target.clone();
@@ -128,14 +128,14 @@
 		// this method is exposed, but perhaps it would be better if we can make it private...
 		this.update = function () {
 
-			var offset = new three_module_js.Vector3();
+			var offset = new THREE.Vector3();
 
 			// so camera.up is the orbit axis
-			var quat = new three_module_js.Quaternion().setFromUnitVectors( object.up, new three_module_js.Vector3( 0, 1, 0 ) );
+			var quat = new THREE.Quaternion().setFromUnitVectors( object.up, new THREE.Vector3( 0, 1, 0 ) );
 			var quatInverse = quat.clone().inverse();
 
-			var lastPosition = new three_module_js.Vector3();
-			var lastQuaternion = new three_module_js.Quaternion();
+			var lastPosition = new THREE.Vector3();
+			var lastQuaternion = new THREE.Quaternion();
 
 			return function update() {
 
@@ -270,29 +270,29 @@
 		var EPS = 0.000001;
 
 		// current position in spherical coordinates
-		var spherical = new three_module_js.Spherical();
-		var sphericalDelta = new three_module_js.Spherical();
+		var spherical = new THREE.Spherical();
+		var sphericalDelta = new THREE.Spherical();
 
 		var scale = 1;
-		var panOffset = new three_module_js.Vector3();
+		var panOffset = new THREE.Vector3();
 		var zoomChanged = false;
 
-		var rotateStart = new three_module_js.Vector2();
-		var rotateStart2 = new three_module_js.Vector2();
-		var rotateEnd = new three_module_js.Vector2();
-		var rotateEnd2 = new three_module_js.Vector2();
-		var rotateDelta = new three_module_js.Vector2();
-		var rotateDelta2 = new three_module_js.Vector2();
-		var rotateDeltaStartFingers = new three_module_js.Vector2();
-		var rotateDeltaEndFingers = new three_module_js.Vector2();
+		var rotateStart = new THREE.Vector2();
+		var rotateStart2 = new THREE.Vector2();
+		var rotateEnd = new THREE.Vector2();
+		var rotateEnd2 = new THREE.Vector2();
+		var rotateDelta = new THREE.Vector2();
+		var rotateDelta2 = new THREE.Vector2();
+		var rotateDeltaStartFingers = new THREE.Vector2();
+		var rotateDeltaEndFingers = new THREE.Vector2();
 
-		var panStart = new three_module_js.Vector2();
-		var panEnd = new three_module_js.Vector2();
-		var panDelta = new three_module_js.Vector2();
+		var panStart = new THREE.Vector2();
+		var panEnd = new THREE.Vector2();
+		var panDelta = new THREE.Vector2();
 
-		var dollyStart = new three_module_js.Vector2();
-		var dollyEnd = new three_module_js.Vector2();
-		var dollyDelta = new three_module_js.Vector2();
+		var dollyStart = new THREE.Vector2();
+		var dollyEnd = new THREE.Vector2();
+		var dollyDelta = new THREE.Vector2();
 
 		function getAutoRotationAngle() {
 
@@ -320,7 +320,7 @@
 
 		var panLeft = function () {
 
-			var v = new three_module_js.Vector3();
+			var v = new THREE.Vector3();
 
 			return function panLeft( distance, objectMatrix ) {
 
@@ -335,7 +335,7 @@
 
 		var panUp = function () {
 
-			var v = new three_module_js.Vector3();
+			var v = new THREE.Vector3();
 
 			return function panUp( distance, objectMatrix ) {
 
@@ -361,7 +361,7 @@
 		// deltaX and deltaY are in pixels; right and down are positive
 		var pan = function () {
 
-			var offset = new three_module_js.Vector3();
+			var offset = new THREE.Vector3();
 
 			return function pan( deltaX, deltaY ) {
 
@@ -1028,7 +1028,7 @@
 
 	};
 
-	MapControls.prototype = Object.create( three_module_js.EventDispatcher.prototype );
+	MapControls.prototype = Object.create( THREE.EventDispatcher.prototype );
 	MapControls.prototype.constructor = THREE.MapControls;
 
 	Object.defineProperties( MapControls.prototype, {
@@ -1157,7 +1157,5 @@
 	} );
 
 	exports.MapControls = MapControls;
-
-	Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
