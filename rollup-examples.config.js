@@ -17,20 +17,35 @@ function createOutput( file ) {
 		treeshake: false,
 		external: p => p !== inputPath,
 
+		plugins: [{
+
+			generateBundle: function(options, bundle) {
+
+				for ( var key in bundle ) {
+
+					bundle[ key ].code = bundle[ key ].code.replace( /three_module_js/g, 'THREE' );
+
+				}
+
+			}
+
+		}],
+
 		output: {
 
 			format: 'umd',
 			name: 'THREE',
 			file: outputPath,
 
-            globals: () => 'THREE',
-            paths: p => /three\.module\.js$/.test( p ) ? 'three' : p,
+			globals: () => 'THREE',
+			paths: p => /three\.module\.js$/.test( p ) ? 'three' : p,
 			extend: true,
 
 			banner:
 				'/**\n' +
 				` * Generated from '${ path.relative( '.', inputPath.replace( /\\/, '/' ) ) }'\n` +
-				' */\n'
+				' */\n',
+			esModule: false
 
 		}
 
@@ -39,7 +54,7 @@ function createOutput( file ) {
 }
 
 // Walk the file structure starting at the given directory and fire
-// the callback for every file.
+// the callback for every js file.
 function walk( dir, cb ) {
 
 	var files = fs.readdirSync( dir );
@@ -51,7 +66,7 @@ function walk( dir, cb ) {
 
 			walk( p, cb );
 
-		} else {
+		} else if ( f.endsWith( '.js' ) ) {
 
 			cb( p );
 
