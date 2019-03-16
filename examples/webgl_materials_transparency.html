@@ -46,7 +46,10 @@
 
 			}
 
-			var params = { opacity: 0.25 };
+			var params = {
+				opacity: 0.25,
+				shadowRadius: 1			
+			};
 
 			var container, stats;
 			var camera, scene, renderer, controls;
@@ -105,10 +108,12 @@
 
 				var mesh = new THREE.Mesh( geometry, material1 );
 				mesh.position.x = - 25.0;
+				mesh.castShadow = true;
 				scene.add( mesh );
 
 				var mesh = new THREE.Mesh( geometry, material2 );
 				mesh.position.x = 25.0;
+				mesh.castShadow = true;
 				scene.add( mesh );
 
 				//
@@ -118,21 +123,23 @@
 				var mesh = new THREE.Mesh( geometry, material );
 				mesh.position.y = - 50;
 				mesh.rotation.x = - Math.PI * 0.5;
+				mesh.receiveShadow = true;
 				scene.add( mesh );
 
 				// Lights
 
-				var spotLight = new THREE.SpotLight( 0xff8888 );
-				spotLight.position.set( 100, 200, 100 );
-				spotLight.angle = Math.PI / 6;
-				spotLight.penumbra = 0.9;
-				scene.add( spotLight );
+				var spotLight1 = new THREE.SpotLight( 0xff8888 );
+				spotLight1.position.set( 100, 200, 100 );
+				spotLight1.angle = Math.PI / 6;
+				spotLight1.penumbra = 0.9;
+				spotLight1.castShadow = true;
+				scene.add( spotLight1 );
 
-				var spotLight = new THREE.SpotLight( 0x8888ff );
-				spotLight.position.set( - 100, - 200, - 100 );
-				spotLight.angle = Math.PI / 6;
-				spotLight.penumbra = 0.9;
-				scene.add( spotLight );
+				var spotLight2 = new THREE.SpotLight( 0x8888ff );
+				spotLight2.position.set( - 100, - 200, - 100 );
+				spotLight2.angle = Math.PI / 6;
+				spotLight2.penumbra = 0.9;
+				scene.add( spotLight2 );
 
 				//
 
@@ -140,6 +147,8 @@
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				renderer.shadowMap.dithering = true;
 				container.appendChild( renderer.domElement );
 
 				renderer.gammaInput = true;
@@ -159,6 +168,12 @@
 					material2.opacity = params.opacity;
 
 				} );
+				gui.add( params, 'shadowRadius', 0, 5 ).onChange( function () {
+
+					spotLight1.shadow.radius = params.shadowRadius;
+
+				} );
+
 				gui.open();
 
 			}
