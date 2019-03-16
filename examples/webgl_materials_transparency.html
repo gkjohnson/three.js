@@ -48,7 +48,8 @@
 
 			var params = {
 				opacity: 0.25,
-				shadowRadius: 1			
+				shadowRadius: 1,
+				ditheredShadows: true
 			};
 
 			var container, stats;
@@ -171,6 +172,11 @@
 				gui.add( params, 'shadowRadius', 0, 5 ).onChange( function () {
 
 					spotLight1.shadow.radius = params.shadowRadius;
+
+				} );
+				gui.add( params, 'ditheredShadows', 0, 5 ).onChange( function () {
+
+					renderer.shadowMap.dithering = params.ditheredShadows;
 
 				} );
 
