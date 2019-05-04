@@ -1037,13 +1037,13 @@ function WebGLRenderer( parameters ) {
 
 					for ( var i = 0; i < object.material.length; i ++ ) {
 
-						initMaterial( object.material[ i ], scene.fog, object );
+						buildProgram( object.material[ i ], scene.fog, object );
 
 					}
 
 				} else {
 
-					initMaterial( object.material, scene.fog, object );
+					buildProgram( object.material, scene.fog, object );
 
 				}
 
@@ -1434,6 +1434,13 @@ function WebGLRenderer( parameters ) {
 
 	function initMaterial( material, fog, object ) {
 
+		buildProgram( material, fog, object );
+		initAttributes( material );
+
+	}
+
+	function buildProgram( material, fog, object ) {
+
 		var materialProperties = properties.get( material );
 
 		var lights = currentRenderState.state.lights;
@@ -1526,40 +1533,6 @@ function WebGLRenderer( parameters ) {
 
 		}
 
-		var programAttributes = program.getAttributes();
-
-		if ( material.morphTargets ) {
-
-			material.numSupportedMorphTargets = 0;
-
-			for ( var i = 0; i < _this.maxMorphTargets; i ++ ) {
-
-				if ( programAttributes[ 'morphTarget' + i ] >= 0 ) {
-
-					material.numSupportedMorphTargets ++;
-
-				}
-
-			}
-
-		}
-
-		if ( material.morphNormals ) {
-
-			material.numSupportedMorphNormals = 0;
-
-			for ( var i = 0; i < _this.maxMorphNormals; i ++ ) {
-
-				if ( programAttributes[ 'morphNormal' + i ] >= 0 ) {
-
-					material.numSupportedMorphNormals ++;
-
-				}
-
-			}
-
-		}
-
 		var uniforms = materialProperties.shader.uniforms;
 
 		if ( ! material.isShaderMaterial &&
@@ -1608,6 +1581,49 @@ function WebGLRenderer( parameters ) {
 			uniforms.pointShadowMap.value = lights.state.pointShadowMap;
 			uniforms.pointShadowMatrix.value = lights.state.pointShadowMatrix;
 			// TODO (abelnation): add area lights shadow info to uniforms
+
+		}
+
+	}
+
+	function initAttributes( material ) {
+
+		var materialProperties = properties.get( material );
+
+		var program = materialProperties.program;
+
+		var uniforms = materialProperties.shader.uniforms;
+		var programAttributes = program.getAttributes();
+
+		if ( material.morphTargets ) {
+
+			material.numSupportedMorphTargets = 0;
+
+			for ( var i = 0; i < _this.maxMorphTargets; i ++ ) {
+
+				if ( programAttributes[ 'morphTarget' + i ] >= 0 ) {
+
+					material.numSupportedMorphTargets ++;
+
+				}
+
+			}
+
+		}
+
+		if ( material.morphNormals ) {
+
+			material.numSupportedMorphNormals = 0;
+
+			for ( var i = 0; i < _this.maxMorphNormals; i ++ ) {
+
+				if ( programAttributes[ 'morphNormal' + i ] >= 0 ) {
+
+					material.numSupportedMorphNormals ++;
+
+				}
+
+			}
 
 		}
 
