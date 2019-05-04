@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<title>Sync Compile</title>
+		<style>
+			body {
+				background-color: #000;
+				margin: 0;
+				overflow: hidden;
+			}
+			#info {
+				position: absolute;
+				top: 0px;
+				width: 100%;
+				color: #FFF;
+				padding: 5px;
+				font-family: Monospace;
+				font-size: 13px;
+				text-align: center;
+				z-index: 1;
+			}
+
+			.label{
+				color: #FFF;
+				font-family: sans-serif;
+				padding: 2px;
+				background: rgba( 0, 0, 0, .6 );
+			}
+
+			a {
+				color: #000000;
+			}
+
+		</style>
+	</head>
+	<body>
+		<script src="https://threejs.org/build/three.js"></script>
+
+		<script>
+
+			const { 
+				Scene,
+				Mesh,
+				PerspectiveCamera,
+				DirectionalLight,
+				AmbientLight,
+				SphereBufferGeometry,
+				WebGLRenderer,
+				MeshStandardMaterial,
+				MeshBasicMaterial,
+				MeshPhongMaterial,
+				MeshPhysicalMaterial,
+				MeshDepthMaterial,
+				MeshToonMaterial,
+				PointsMaterial,
+				ShadowMaterial,
+				MeshDistanceMaterial,
+				MeshLambertMaterial,
+				MeshMatcapMaterial,
+				MeshNormalMaterial,
+			} = THREE;
+
+			const cons = [
+				MeshStandardMaterial,
+				MeshBasicMaterial,
+				MeshPhongMaterial,
+				MeshPhysicalMaterial,
+				MeshDepthMaterial,
+				MeshToonMaterial,
+				PointsMaterial,
+				ShadowMaterial,
+				MeshDistanceMaterial,
+				MeshLambertMaterial,
+				MeshMatcapMaterial,
+				MeshNormalMaterial,
+			];
+
+			const renderer = new WebGLRenderer();
+			const camera = new PerspectiveCamera();
+			const scene = new Scene();
+			scene.add(new DirectionalLight());
+			scene.add(new DirectionalLight());
+			scene.add(new AmbientLight());
+
+			const geom = new SphereBufferGeometry();
+			cons.forEach(c => scene.add( new Mesh( geom, new c() ) ) );
+
+			console.time( 'total time' );
+
+			console.time( 'compile scene' );
+			renderer.compile(scene, camera);
+			console.timeEnd( 'compile scene' );
+
+			const now = new Date();
+			while(new Date() - now < 50);
+
+			console.time( 'render' );
+			renderer.render(scene, camera);
+			console.timeEnd( 'render' );
+				
+			console.timeEnd( 'total time' );
+		</script>
+	</body>
+</html>
