@@ -7,6 +7,99 @@
 
 THREE.LDrawLoader = ( function () {
 
+	function smoothNormals( triangles, optionalSegments ) {
+
+		function hashVertex( v ) {
+
+			var x = Math.trunc( v.x * 1e4 );
+			var y = Math.trunc( v.y * 1e4 );
+			var z = Math.trunc( v.z * 1e4 );
+			return `${ x },${ y },${ z }`;
+
+		}
+
+		function hashEdge( v0, v1 ) {
+
+			return `${ hashVertex( v0 ) }_${ hashVertex( v1 ) }`;
+
+		}
+
+		var edgeMap = {};
+		for ( var i = 0, l = optionalSegments.length; i < l; i ++ ) {
+
+			var os = optionalSegments[ i ];
+			var v0 = os.v0;
+			var v1 = os.v1;
+			var hash = hashEdge( v0, v1 );
+			var obj = {
+				n0: new THREE.Vector3(),
+				n1: new THREE.Vector3(),
+				count: 0
+			};
+			edgeMap[ hash ] = obj;
+
+		}
+
+		var temp0 = new THREE.Vector3();
+		var temp1 = new THREE.Vector3();
+		var faceNormal = new THREE.Vector3();
+		for ( var i = 0, l = triangles.length; i < l; i ++ ) {
+
+
+			var tri = triangles[ i ];
+			temp0.subVectors( tri.v1, tri.v0 );
+			temp1.subVectors( tri.v2, tri.v1 );
+			faceNormal.crossVectors( temp0, temp1 );
+
+			tri.n0 = faceNormal.clone();
+			tri.n1 = faceNormal.clone();
+			tri.n2 = faceNormal.clone();
+
+			for ( var i2 = 0, l2 = 3; i2 < l2; i2 ++ ) {
+
+				var index = i2;
+				var next = ( i2 + 1 ) % 3;
+
+				var v0 = tri[ `v${ index }` ];
+				var v1 = tri[ `v${ next }` ];
+				var h0 = hashEdge( v0, v1 );
+				var h1 = hashEdge( v1, v0 );
+
+				var obj, n0, n1;
+				if ( h0 in edgeMap ) {
+
+					obj = edgeMap[ h0 ];
+					n0 = obj.n0;
+					n1 = obj.n1;
+
+				}
+
+				if ( h1 in edgeMap ) {
+
+					obj = edgeMap[ h1 ];
+					n0 = obj.n1;
+					n1 = obj.n0;
+
+				}
+
+				if ( obj ) {
+
+					obj.count ++;
+
+					n0.lerp( faceNormal, 1 / obj.count );
+					n1.lerp( faceNormal, 1 / obj.count );
+
+					tri[ `n${ index }` ] = n0;
+					tri[ `n${ next }` ] = n1;
+
+				}
+
+			}
+
+		}
+
+	}
+
 	function isPrimitiveType( type ) {
 
 		return /primitive/i.test( type ) || type === 'Subpart';
@@ -125,11 +218,11 @@ THREE.LDrawLoader = ( function () {
 		// Sort the triangles or line segments by colour code to make later the mesh groups
 		elements.sort( sortByMaterial );
 
-		var vertices = [];
+		var positions = [];
+		var normals = [];
 		var materials = [];
 
 		var bufferGeometry = new THREE.BufferGeometry();
-		bufferGeometry.clearGroups();
 		var prevMaterial = null;
 		var index0 = 0;
 		var numGroupVerts = 0;
@@ -140,10 +233,17 @@ THREE.LDrawLoader = ( function () {
 			var v0 = elem.v0;
 			var v1 = elem.v1;
 			// Note that LDraw coordinate system is rotated 180 deg. in the X axis w.r.t. Three.js's one
-			vertices.push( v0.x, v0.y, v0.z, v1.x, v1.y, v1.z );
+			positions.push( v0.x, v0.y, v0.z, v1.x, v1.y, v1.z );
 			if ( elementSize === 3 ) {
 
-				vertices.push( elem.v2.x, elem.v2.y, elem.v2.z );
+				positions.push( elem.v2.x, elem.v2.y, elem.v2.z );
+
+				var n0 = elem.n0;
+				var n1 = elem.n1;
+				var n2 = elem.n2;
+				normals.push( n0.x, n0.y, n0.z );
+				normals.push( n1.x, n1.y, n1.z );
+				normals.push( n2.x, n2.y, n2.z );
 
 			}
 
@@ -175,7 +275,13 @@ THREE.LDrawLoader = ( function () {
 
 		}
 
-		bufferGeometry.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+		bufferGeometry.addAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+
+		if ( elementSize === 3 ) {
+
+			bufferGeometry.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+
+		}
 
 		var object3d = null;
 
@@ -184,8 +290,6 @@ THREE.LDrawLoader = ( function () {
 			object3d = new THREE.LineSegments( bufferGeometry, materials );
 
 		} else if ( elementSize === 3 ) {
-
-			bufferGeometry.computeVertexNormals();
 
 			object3d = new THREE.Mesh( bufferGeometry, materials );
 
@@ -342,6 +446,8 @@ THREE.LDrawLoader = ( function () {
 					var isRoot = ! parentParseScope.isFromParse;
 					if ( scope.separateObjects && ! isPrimitiveType( parseScope.type ) || isRoot ) {
 
+						smoothNormals( parseScope.triangles, parseScope.optionalSegments );
+
 						const objGroup = parseScope.groupObject;
 						if ( parseScope.triangles.length > 0 ) {
 
@@ -355,11 +461,11 @@ THREE.LDrawLoader = ( function () {
 
 						}
 
-						if ( parseScope.optionalSegments.length > 0 ) {
+						// if ( parseScope.optionalSegments.length > 0 ) {
 
-							objGroup.add( createObject( parseScope.optionalSegments, 2 ) );
+						// 	objGroup.add( createObject( parseScope.optionalSegments, 2 ) );
 
-						}
+						// }
 
 						if ( parentParseScope.groupObject ) {
 
@@ -1145,7 +1251,6 @@ THREE.LDrawLoader = ( function () {
 
 										}
 
-
 										triangles = currentParseScope.triangles;
 										lineSegments = currentParseScope.lineSegments;
 										optionalSegments = currentParseScope.optionalSegments;
@@ -1376,7 +1481,10 @@ THREE.LDrawLoader = ( function () {
 							colourCode: material.userData.code,
 							v0: v0,
 							v1: v1,
-							v2: v2
+							v2: v2,
+							n0: null,
+							n1: null,
+							n2: null
 						} );
 
 						if ( doubleSided === true ) {
@@ -1386,7 +1494,10 @@ THREE.LDrawLoader = ( function () {
 								colourCode: material.userData.code,
 								v0: v0,
 								v1: v2,
-								v2: v1
+								v2: v1,
+								n0: null,
+								n1: null,
+								n2: null
 							} );
 
 						}
@@ -1424,7 +1535,10 @@ THREE.LDrawLoader = ( function () {
 							colourCode: material.userData.code,
 							v0: v0,
 							v1: v1,
-							v2: v2
+							v2: v2,
+							n0: null,
+							n1: null,
+							n2: null
 						} );
 
 						triangles.push( {
@@ -1432,7 +1546,10 @@ THREE.LDrawLoader = ( function () {
 							colourCode: material.userData.code,
 							v0: v0,
 							v1: v2,
-							v2: v3
+							v2: v3,
+							n0: null,
+							n1: null,
+							n2: null
 						} );
 
 						if ( doubleSided === true ) {
@@ -1442,7 +1559,10 @@ THREE.LDrawLoader = ( function () {
 								colourCode: material.userData.code,
 								v0: v0,
 								v1: v2,
-								v2: v1
+								v2: v1,
+								n0: null,
+								n1: null,
+								n2: null
 							} );
 
 							triangles.push( {
@@ -1450,7 +1570,10 @@ THREE.LDrawLoader = ( function () {
 								colourCode: material.userData.code,
 								v0: v0,
 								v1: v3,
-								v2: v2
+								v2: v2,
+								n0: null,
+								n1: null,
+								n2: null
 							} );
 
 						}
