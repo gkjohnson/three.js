@@ -13,9 +13,9 @@ THREE.LDrawLoader = ( function () {
 
 		function hashVertex( v ) {
 
-			var x = Math.trunc( v.x * 1e6 );
-			var y = Math.trunc( v.y * 1e6 );
-			var z = Math.trunc( v.z * 1e6 );
+			var x = ~ ~ ( v.x * 1e6 );
+			var y = ~ ~ ( v.y * 1e6 );
+			var z = ~ ~ ( v.z * 1e6 );
 			return `${ x },${ y },${ z }`;
 
 		}
@@ -28,6 +28,7 @@ THREE.LDrawLoader = ( function () {
 
 		var hardEdges = new Set();
 		var halfEdgeList = {};
+		var normals = [];
 
 		// track the list of hard edges
 		for ( var i = 0, l = lineSegments.length; i < l; i ++ ) {
@@ -68,9 +69,28 @@ THREE.LDrawLoader = ( function () {
 			while ( queue.length ) {
 
 				var tri = queue.shift();
-				if ( tri.n0 === null ) tri.n0 = new THREE.Vector3();
-				if ( tri.n1 === null ) tri.n1 = new THREE.Vector3();
-				if ( tri.n2 === null ) tri.n2 = new THREE.Vector3();
+				var faceNormal = tri.faceNormal;
+				if ( tri.n0 === null ) {
+
+					tri.n0 = faceNormal.clone();
+					normals.push( tri.n0 );
+
+				}
+
+				if ( tri.n1 === null ) {
+
+					tri.n1 = faceNormal.clone();
+					normals.push( tri.n1 );
+
+				}
+
+				if ( tri.n2 === null ) {
+
+					tri.n2 = faceNormal.clone();
+					normals.push( tri.n2 );
+
+				}
+
 				for ( var i2 = 0, l2 = 3; i2 < l2; i2 ++ ) {
 
 					var index = i2;
@@ -98,6 +118,9 @@ THREE.LDrawLoader = ( function () {
 
 								otherTri[ `n${ otherIndex }` ] = tri[ `n${ next }` ];
 								otherTri[ `n${ otherNext }` ] = tri[ `n${ index }` ];
+
+								tri[ `n${ next }` ].add( otherTri.faceNormal );
+								tri[ `n${ index }` ].add( otherTri.faceNormal );
 								break;
 
 							}
@@ -112,33 +135,11 @@ THREE.LDrawLoader = ( function () {
 
 		}
 
-		var normals = new Set();
-		var temp0 = new THREE.Vector3();
-		var temp1 = new THREE.Vector3();
-		var faceNormal = new THREE.Vector3();
-		for ( var i = 0, l = triangles.length; i < l; i ++ ) {
+		for ( var i = 0, l = normals.length; i < l; i ++ ) {
 
-			var tri = triangles[ i ];
-			temp0.subVectors( tri.v1, tri.v0 );
-			temp1.subVectors( tri.v2, tri.v1 );
-			faceNormal.crossVectors( temp0, temp1 ).normalize();
-
-			tri.n0 = tri.n0 || faceNormal;
-			tri.n1 = tri.n1 || faceNormal;
-			tri.n2 = tri.n2 || faceNormal;
-
-			tri.n0.add( faceNormal );
-			tri.n1.add( faceNormal );
-			tri.n2.add( faceNormal );
-
-			normals.add( tri.n0 );
-			normals.add( tri.n1 );
-			normals.add( tri.n2 );
+			normals[ i ].normalize();
 
 		}
-
-		normals.forEach( n => n.normalize() );
-
 
 	}
 
@@ -280,9 +281,9 @@ THREE.LDrawLoader = ( function () {
 
 				positions.push( elem.v2.x, elem.v2.y, elem.v2.z );
 
-				var n0 = elem.n0;
-				var n1 = elem.n1;
-				var n2 = elem.n2;
+				var n0 = elem.n0 || elem.faceNormal;
+				var n1 = elem.n1 || elem.faceNormal;
+				var n2 = elem.n2 || elem.faceNormal;
 				normals.push( n0.x, n0.y, n0.z );
 				normals.push( n1.x, n1.y, n1.z );
 				normals.push( n2.x, n2.y, n2.z );
@@ -552,10 +553,6 @@ THREE.LDrawLoader = ( function () {
 
 						}
 
-
-						// TODO: we need to multiple matrices here
-						// TODO: First, instead of tracking matrices anywhere else we
-						// should just multiple everything here.
 						var parentLineSegments = parentParseScope.lineSegments;
 						var parentOptionalSegments = parentParseScope.optionalSegments;
 						var parentTriangles = parentParseScope.triangles;
@@ -1523,7 +1520,7 @@ THREE.LDrawLoader = ( function () {
 						}
 
 						tempVec0.subVectors( v1, v0 );
-						tempVec1.subVectors( v2, v2 );
+						tempVec1.subVectors( v2, v1 );
 						faceNormal = new THREE.Vector3()
 							.crossVectors( tempVec0, tempVec1 )
 							.normalize();
@@ -1535,9 +1532,9 @@ THREE.LDrawLoader = ( function () {
 							v1: v1,
 							v2: v2,
 							faceNormal: faceNormal,
-							n0: faceNormal,
-							n1: faceNormal,
-							n2: faceNormal
+							n0: null,
+							n1: null,
+							n2: null
 						} );
 
 						if ( doubleSided === true ) {
@@ -1549,9 +1546,9 @@ THREE.LDrawLoader = ( function () {
 								v1: v2,
 								v2: v1,
 								faceNormal: faceNormal,
-								n0: faceNormal,
-								n1: faceNormal,
-								n2: faceNormal
+								n0: null,
+								n1: null,
+								n2: null
 							} );
 
 						}
@@ -1585,7 +1582,7 @@ THREE.LDrawLoader = ( function () {
 						}
 
 						tempVec0.subVectors( v1, v0 );
-						tempVec1.subVectors( v2, v2 );
+						tempVec1.subVectors( v2, v1 );
 						faceNormal = new THREE.Vector3()
 							.crossVectors( tempVec0, tempVec1 )
 							.normalize();
@@ -1597,9 +1594,9 @@ THREE.LDrawLoader = ( function () {
 							v1: v1,
 							v2: v2,
 							faceNormal: faceNormal,
-							n0: faceNormal,
-							n1: faceNormal,
-							n2: faceNormal
+							n0: null,
+							n1: null,
+							n2: null
 						} );
 
 						triangles.push( {
@@ -1609,9 +1606,9 @@ THREE.LDrawLoader = ( function () {
 							v1: v2,
 							v2: v3,
 							faceNormal: faceNormal,
-							n0: faceNormal,
-							n1: faceNormal,
-							n2: faceNormal
+							n0: null,
+							n1: null,
+							n2: null
 						} );
 
 						if ( doubleSided === true ) {
@@ -1623,9 +1620,9 @@ THREE.LDrawLoader = ( function () {
 								v1: v2,
 								v2: v1,
 								faceNormal: faceNormal,
-								n0: faceNormal,
-								n1: faceNormal,
-								n2: faceNormal
+								n0: null,
+								n1: null,
+								n2: null
 							} );
 
 							triangles.push( {
@@ -1635,9 +1632,9 @@ THREE.LDrawLoader = ( function () {
 								v1: v3,
 								v2: v2,
 								faceNormal: faceNormal,
-								n0: faceNormal,
-								n1: faceNormal,
-								n2: faceNormal
+								n0: null,
+								n1: null,
+								n2: null
 							} );
 
 						}
