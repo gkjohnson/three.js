@@ -7,6 +7,8 @@
 
 THREE.LDrawLoader = ( function () {
 
+	var tempVec0 = new THREE.Vector3();
+	var tempVec1 = new THREE.Vector3();
 	function smoothNormals( triangles, lineSegments ) {
 
 		function hashVertex( v ) {
@@ -119,7 +121,7 @@ THREE.LDrawLoader = ( function () {
 			var tri = triangles[ i ];
 			temp0.subVectors( tri.v1, tri.v0 );
 			temp1.subVectors( tri.v2, tri.v1 );
-			faceNormal.crossVectors( temp0, temp1 );
+			faceNormal.crossVectors( temp0, temp1 ).normalize();
 
 			tri.n0 = tri.n0 || faceNormal;
 			tri.n1 = tri.n1 || faceNormal;
@@ -482,11 +484,15 @@ THREE.LDrawLoader = ( function () {
 
 				function finalizeObject() {
 
-					// TODO: Handle smoothing
+					if ( parseScope.type === 'Part' ) {
+
+						smoothNormals( parseScope.triangles, parseScope.lineSegments );
+
+					}
+
 					var isRoot = ! parentParseScope.isFromParse;
 					if ( scope.separateObjects && ! isPrimitiveType( parseScope.type ) || isRoot ) {
 
-						smoothNormals( parseScope.triangles, parseScope.lineSegments );
 
 						const objGroup = parseScope.groupObject;
 						if ( parseScope.triangles.length > 0 ) {
@@ -1500,7 +1506,7 @@ THREE.LDrawLoader = ( function () {
 						var inverted = currentParseScope.inverted;
 						var ccw = bfcCCW !== inverted;
 						var doubleSided = ! bfcCertified || ! bfcCull;
-						var v0, v1, v2;
+						var v0, v1, v2, faceNormal;
 
 						if ( ccw === true ) {
 
@@ -1516,15 +1522,22 @@ THREE.LDrawLoader = ( function () {
 
 						}
 
+						tempVec0.subVectors( v1, v0 );
+						tempVec1.subVectors( v2, v2 );
+						faceNormal = new THREE.Vector3()
+							.crossVectors( tempVec0, tempVec1 )
+							.normalize();
+
 						triangles.push( {
 							material: material,
 							colourCode: material.userData.code,
 							v0: v0,
 							v1: v1,
 							v2: v2,
-							n0: null,
-							n1: null,
-							n2: null
+							faceNormal: faceNormal,
+							n0: faceNormal,
+							n1: faceNormal,
+							n2: faceNormal
 						} );
 
 						if ( doubleSided === true ) {
@@ -1535,9 +1548,10 @@ THREE.LDrawLoader = ( function () {
 								v0: v0,
 								v1: v2,
 								v2: v1,
-								n0: null,
-								n1: null,
-								n2: null
+								faceNormal: faceNormal,
+								n0: faceNormal,
+								n1: faceNormal,
+								n2: faceNormal
 							} );
 
 						}
@@ -1552,7 +1566,7 @@ THREE.LDrawLoader = ( function () {
 						var inverted = currentParseScope.inverted;
 						var ccw = bfcCCW !== inverted;
 						var doubleSided = ! bfcCertified || ! bfcCull;
-						var v0, v1, v2, v3;
+						var v0, v1, v2, v3, faceNormal;
 
 						if ( ccw === true ) {
 
@@ -1570,15 +1584,22 @@ THREE.LDrawLoader = ( function () {
 
 						}
 
+						tempVec0.subVectors( v1, v0 );
+						tempVec1.subVectors( v2, v2 );
+						faceNormal = new THREE.Vector3()
+							.crossVectors( tempVec0, tempVec1 )
+							.normalize();
+
 						triangles.push( {
 							material: material,
 							colourCode: material.userData.code,
 							v0: v0,
 							v1: v1,
 							v2: v2,
-							n0: null,
-							n1: null,
-							n2: null
+							faceNormal: faceNormal,
+							n0: faceNormal,
+							n1: faceNormal,
+							n2: faceNormal
 						} );
 
 						triangles.push( {
@@ -1587,9 +1608,10 @@ THREE.LDrawLoader = ( function () {
 							v0: v0,
 							v1: v2,
 							v2: v3,
-							n0: null,
-							n1: null,
-							n2: null
+							faceNormal: faceNormal,
+							n0: faceNormal,
+							n1: faceNormal,
+							n2: faceNormal
 						} );
 
 						if ( doubleSided === true ) {
@@ -1600,9 +1622,10 @@ THREE.LDrawLoader = ( function () {
 								v0: v0,
 								v1: v2,
 								v2: v1,
-								n0: null,
-								n1: null,
-								n2: null
+								faceNormal: faceNormal,
+								n0: faceNormal,
+								n1: faceNormal,
+								n2: faceNormal
 							} );
 
 							triangles.push( {
@@ -1611,9 +1634,10 @@ THREE.LDrawLoader = ( function () {
 								v0: v0,
 								v1: v3,
 								v2: v2,
-								n0: null,
-								n1: null,
-								n2: null
+								faceNormal: faceNormal,
+								n0: faceNormal,
+								n1: faceNormal,
+								n2: faceNormal
 							} );
 
 						}
