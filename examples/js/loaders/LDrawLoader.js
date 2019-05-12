@@ -28,9 +28,10 @@ THREE.LDrawLoader = ( function () {
 
 		var hardEdges = new Set();
 		var halfEdgeList = {};
+		var fullHalfEdgeList = {};
 		var normals = [];
 
-		// track the list of hard edges
+		// Save the list of hard edges by hash
 		for ( var i = 0, l = lineSegments.length; i < l; i ++ ) {
 
 			var ls = lineSegments[ i ];
@@ -41,7 +42,7 @@ THREE.LDrawLoader = ( function () {
 
 		}
 
-		// track the half edge associated with each triangle
+		// track the half edges associated with each triangle
 		for ( var i = 0, l = triangles.length; i < l; i ++ ) {
 
 			var tri = triangles[ i ];
@@ -53,22 +54,28 @@ THREE.LDrawLoader = ( function () {
 				var v1 = tri[ `v${ next }` ];
 				var hash = hashEdge( v0, v1 );
 
+				// don't add the triangle if the edge is supposed to be hard
 				if ( hardEdges.has( hash ) ) continue;
 				halfEdgeList[ hash ] = tri;
+				fullHalfEdgeList[ hash ] = tri;
 
 			}
 
 		}
 
+		// Iterate until we've tried to connect all triangles to share normals
 		while ( true ) {
 
+			// Stop if there are no more triangles left
 			var halfEdges = Object.keys( halfEdgeList );
 			if ( halfEdges.length === 0 ) break;
 
+			// Exhaustively find all connected triangles
 			var i = 0;
-			var queue = [ halfEdgeList[ halfEdges[ 0 ] ] ];
+			var queue = [ fullHalfEdgeList[ halfEdges[ 0 ] ] ];
 			while ( i < queue.length ) {
 
+				// initialize all vertex normals in this triangle
 				var tri = queue[ i ];
 				i ++;
 
@@ -94,6 +101,7 @@ THREE.LDrawLoader = ( function () {
 
 				}
 
+				// Check if any edge is connected to another triangle edge
 				for ( var i2 = 0, l2 = 3; i2 < l2; i2 ++ ) {
 
 					var index = i2;
@@ -101,21 +109,25 @@ THREE.LDrawLoader = ( function () {
 					var v0 = tri[ `v${ index }` ];
 					var v1 = tri[ `v${ next }` ];
 
+					// delete this triangle from the list so it won't be found again
 					var hash = hashEdge( v0, v1 );
 					delete halfEdgeList[ hash ];
 
 					var reverseHash = hashEdge( v1, v0 );
-					var otherTri = halfEdgeList[ reverseHash ];
+					var otherTri = fullHalfEdgeList[ reverseHash ];
 					if ( otherTri ) {
 
-						if ( Math.abs( otherTri.faceNormal.dot( tri.faceNormal ) ) < 0.5 ) {
+						// if this triangle has already been traversed then it won't be in
+						// the halfEdgeList. If it has not then add it to the queue and delete
+						// it so it won't be found again.
+						if ( reverseHash in halfEdgeList ) {
 
-							continue;
+							queue.push( otherTri );
+							delete halfEdgeList[ reverseHash ];
 
 						}
 
-						delete halfEdgeList[ reverseHash ];
-						queue.push( otherTri );
+						// Find the matching edge in this triangle and copy the normal vector over
 						for ( var i3 = 0, l3 = 3; i3 < l3; i3 ++ ) {
 
 							var otherIndex = i3;
@@ -145,6 +157,7 @@ THREE.LDrawLoader = ( function () {
 
 		}
 
+		// The normals of each face have been added up so now we average them by normalizing the vector.
 		for ( var i = 0, l = normals.length; i < l; i ++ ) {
 
 			normals[ i ].normalize();
@@ -539,30 +552,14 @@ THREE.LDrawLoader = ( function () {
 
 						if ( scope.separateObjects ) {
 
-							parseScope.lineSegments.forEach( ls => {
-
-								ls.v0.applyMatrix4( parseScope.matrix );
-								ls.v1.applyMatrix4( parseScope.matrix );
-
-							} );
-
-							parseScope.optionalSegments.forEach( ls => {
-
-								ls.v0.applyMatrix4( parseScope.matrix );
-								ls.v1.applyMatrix4( parseScope.matrix );
-
-							} );
-
+							// TODO: get normal matrix here
 							parseScope.triangles.forEach( ls => {
-
-								ls.v0 = ls.v0.clone().applyMatrix4( parseScope.matrix );
-								ls.v1 = ls.v1.clone().applyMatrix4( parseScope.matrix );
-								ls.v2 = ls.v2.clone().applyMatrix4( parseScope.matrix );
 
 							} );
 
 						}
 
+						var separateObjects = scope.separateObjects;
 						var parentLineSegments = parentParseScope.lineSegments;
 						var parentOptionalSegments = parentParseScope.optionalSegments;
 						var parentTriangles = parentParseScope.triangles;
@@ -573,19 +570,42 @@ THREE.LDrawLoader = ( function () {
 
 						for ( var i = 0, l = lineSegments.length; i < l; i ++ ) {
 
-							parentLineSegments.push( lineSegments[ i ] );
+							var ls = lineSegments[ i ];
+							if ( separateObjects ) {
+
+								ls.v0.applyMatrix4( parseScope.matrix );
+								ls.v1.applyMatrix4( parseScope.matrix );
+
+							}
+							parentLineSegments.push( ls );
 
 						}
 
 						for ( var i = 0, l = optionalSegments.length; i < l; i ++ ) {
 
-							parentOptionalSegments.push( optionalSegments[ i ] );
+							var os = optionalSegments[ i ];
+							if ( separateObjects ) {
+
+								os.v0.applyMatrix4( parseScope.matrix );
+								os.v1.applyMatrix4( parseScope.matrix );
+
+							}
+							parentOptionalSegments.push( os );
 
 						}
 
 						for ( var i = 0, l = triangles.length; i < l; i ++ ) {
 
-							parentTriangles.push( triangles[ i ] );
+							var tri = triangles[ i ];
+							if ( separateObjects ) {
+
+								tri.v0 = tri.v0.clone().applyMatrix4( parseScope.matrix );
+								tri.v1 = tri.v1.clone().applyMatrix4( parseScope.matrix );
+								tri.v2 = tri.v2.clone().applyMatrix4( parseScope.matrix );
+								// TODO: handle the normal scaling here
+
+							}
+							parentTriangles.push( tri );
 
 						}
 
