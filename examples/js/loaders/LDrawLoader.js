@@ -602,7 +602,10 @@ THREE.LDrawLoader = ( function () {
 								tri.v0 = tri.v0.clone().applyMatrix4( parseScope.matrix );
 								tri.v1 = tri.v1.clone().applyMatrix4( parseScope.matrix );
 								tri.v2 = tri.v2.clone().applyMatrix4( parseScope.matrix );
-								// TODO: handle the normal scaling here
+
+								tempVec0.subVectors( tri.v1, tri.v0 );
+								tempVec1.subVectors( tri.v2, tri.v1 );
+								tri.faceNormal.crossVectors( tempVec0, tempVec1 ).normalize();
 
 							}
 							parentTriangles.push( tri );
