@@ -531,11 +531,11 @@ THREE.LDrawLoader = ( function () {
 
 						}
 
-						// if ( parseScope.optionalSegments.length > 0 ) {
+						if ( parseScope.optionalSegments.length > 0 ) {
 
-						// 	objGroup.add( createObject( parseScope.optionalSegments, 2 ) );
+							objGroup.add( createObject( parseScope.optionalSegments, 2 ) );
 
-						// }
+						}
 
 						if ( parentParseScope.groupObject ) {
 
@@ -549,15 +549,6 @@ THREE.LDrawLoader = ( function () {
 						}
 
 					} else {
-
-						if ( scope.separateObjects ) {
-
-							// TODO: get normal matrix here
-							parseScope.triangles.forEach( ls => {
-
-							} );
-
-						}
 
 						var separateObjects = scope.separateObjects;
 						var parentLineSegments = parentParseScope.lineSegments;
