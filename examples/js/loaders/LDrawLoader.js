@@ -105,6 +105,7 @@ THREE.LDrawLoader = ( function () {
 					var otherTri = halfEdgeList[ reverseHash ];
 					if ( otherTri ) {
 
+						delete halfEdgeList[ reverseHash ];
 						queue.push( otherTri );
 						for ( var i3 = 0, l3 = 3; i3 < l3; i3 ++ ) {
 
