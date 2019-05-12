@@ -65,10 +65,13 @@ THREE.LDrawLoader = ( function () {
 			var halfEdges = Object.keys( halfEdgeList );
 			if ( halfEdges.length === 0 ) break;
 
-			var queue = [ halfEdgeList[ halfEdges.pop() ] ];
-			while ( queue.length ) {
+			var i = 0;
+			var queue = [ halfEdgeList[ halfEdges[ 0 ] ] ];
+			while ( i < queue.length ) {
 
-				var tri = queue.shift();
+				var tri = queue[ i ];
+				i ++;
+
 				var faceNormal = tri.faceNormal;
 				if ( tri.n0 === null ) {
 
@@ -104,6 +107,12 @@ THREE.LDrawLoader = ( function () {
 					var reverseHash = hashEdge( v1, v0 );
 					var otherTri = halfEdgeList[ reverseHash ];
 					if ( otherTri ) {
+
+						if ( Math.abs( otherTri.faceNormal.dot( tri.faceNormal ) ) < 0.5 ) {
+
+							continue;
+
+						}
 
 						delete halfEdgeList[ reverseHash ];
 						queue.push( otherTri );
