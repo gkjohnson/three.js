@@ -132,9 +132,11 @@ ShaderLib[ 'line' ] = {
 			}
 
 			#ifdef WORLD_UNITS
-			vec3 worldDir = normalize( end.xyz - start.xyz );
-			start.xyz += - worldDir * linewidth * 0.5;
-			end.xyz += worldDir * linewidth * 0.5;
+
+				vec3 worldDir = normalize( end.xyz - start.xyz );
+				start.xyz += - worldDir * linewidth * 0.5;
+				end.xyz += worldDir * linewidth * 0.5;
+
 			#endif
 
 			// clip space
@@ -146,20 +148,33 @@ ShaderLib[ 'line' ] = {
 			vec3 ndcEnd = clipEnd.xyz / clipEnd.w;
 
 			#ifdef WORLD_UNITS
-			if ( ndcStart.z < ndcEnd.z ) {
-				vec3 temp3 = ndcStart;
-				ndcStart = ndcEnd;
-				ndcEnd = temp3;
 
-				vec4 temp4 = start;
-				start = end;
-				end = temp4;
+				if ( ndcStart.z < ndcEnd.z ) {
 
-				#ifdef USE_COLOR
-				vColor.xyz = ( position.y > 0.5 ) ? instanceColorStart : instanceColorEnd;
-				#endif
+					vec3 temp3 = ndcStart;
+					ndcStart = ndcEnd;
+					ndcEnd = temp3;
 
-			}
+					vec4 temp4 = start;
+					start = end;
+					end = temp4;
+
+					vUv.y *= -1.0;
+
+					#ifdef USE_COLOR
+
+						vColor.xyz = ( position.y > 0.5 ) ? instanceColorStart : instanceColorEnd;
+
+					#endif
+
+					#ifdef USE_DASH
+
+						vLineDistance = ( position.y > 0.5 ) ? dashScale * instanceDistanceStart : dashScale * instanceDistanceEnd;
+
+					#endif
+
+				}
+
 			#endif
 
 			// direction
@@ -174,65 +189,69 @@ ShaderLib[ 'line' ] = {
 
 			#ifdef WORLD_UNITS
 
-			// sign flip
-			if ( position.x < 0.0 ) offset *= - 1.0;
+				// sign flip
+				if ( position.x < 0.0 ) offset *= - 1.0;
 
-			offset -= dir;
+				// TODO: Generate a orthogonal vector here, instead, the offset
+				// the width of the geometry by that and use that to position the end
+				// cap quads.
+				vec3 dir3 = normalize( end.xyz - start.xyz );
+				offset -= dir * dot( dir3, vec3( 0.0, 0.0, 1.0 ) );
 
-			// endcaps
-			if ( position.y < 0.0 ) {
+				// endcaps
+				if ( position.y < 0.0 ) {
 
-				offset += dir * 2.0;
+					offset += dir * 2.0;
 
-			} else if ( position.y > 1.0 ) {
+				} else if ( position.y > 1.0 ) {
 
-				offset += dir * 2.0;
+					offset += dir * 2.0;
 
-			}
+				}
 
-			// adjust for linewidth
-			offset *= linewidth * 0.5;
+				// adjust for linewidth
+				offset *= linewidth * 0.5;
 
-			// select end
-			worldPos = ( position.y < 0.5 ) ? start : end;
+				// select end
+				worldPos = ( position.y < 0.5 ) ? start : end;
 
-			worldPos.xy += offset;
+				worldPos.xy += offset;
 
-			vec4 clip = projectionMatrix * worldPos;
+				vec4 clip = projectionMatrix * worldPos;
 
 			#else
 
-			// undo aspect ratio adjustment
-			dir.x /= aspect;
-			offset.x /= aspect;
+				// undo aspect ratio adjustment
+				dir.x /= aspect;
+				offset.x /= aspect;
 
-			// sign flip
-			if ( position.x < 0.0 ) offset *= - 1.0;
+				// sign flip
+				if ( position.x < 0.0 ) offset *= - 1.0;
 
-			// endcaps
-			if ( position.y < 0.0 ) {
+				// endcaps
+				if ( position.y < 0.0 ) {
 
-				offset += - dir;
+					offset += - dir;
 
-			} else if ( position.y > 1.0 ) {
+				} else if ( position.y > 1.0 ) {
 
-				offset += dir;
+					offset += dir;
 
-			}
+				}
 
-			// adjust for linewidth
-			offset *= linewidth;
+				// adjust for linewidth
+				offset *= linewidth;
 
-			// adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...
-			offset /= resolution.y;
+				// adjust for clip-space to screen-space conversion // maybe resolution should be based on viewport ...
+				offset /= resolution.y;
 
-			// select end
-			vec4 clip = ( position.y < 0.5 ) ? clipStart : clipEnd;
+				// select end
+				vec4 clip = ( position.y < 0.5 ) ? clipStart : clipEnd;
 
-			// back to clip space
-			offset *= clip.w;
+				// back to clip space
+				offset *= clip.w;
 
-			clip.xy += offset;
+				clip.xy += offset;
 
 			#endif
 
@@ -316,6 +335,8 @@ ShaderLib[ 'line' ] = {
 
 			#ifdef WORLD_UNITS
 
+				// TODO: Find the intersection of the view ray with the surface of the cylinder to get the
+				// line parameter then use that to back out the color and dashes.
 				vec3 rayEnd = normalize( worldPos.xyz ) * 1000.0;
 				vec3 lineDir = worldEnd - worldStart;
 				vec2 params = closestLineToLine( worldStart, worldEnd, vec3( 0.0, 0.0, 0.0 ), rayEnd );
