@@ -47,7 +47,6 @@ ShaderLib[ 'line' ] = {
 		#include <logdepthbuf_pars_vertex>
 		#include <clipping_planes_pars_vertex>
 
-		uniform float worldUnits;
 		uniform float linewidth;
 		uniform vec2 resolution;
 
@@ -58,7 +57,9 @@ ShaderLib[ 'line' ] = {
 		attribute vec3 instanceColorEnd;
 
 		varying vec2 vUv;
-		varying vec3 viewDir;
+		varying vec4 worldPos;
+		varying vec3 worldStart;
+		varying vec3 worldEnd;
 
 		#ifdef USE_DASH
 
@@ -105,6 +106,9 @@ ShaderLib[ 'line' ] = {
 			// camera space
 			vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
 			vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );
+
+			worldStart = start.xyz;
+			worldEnd = end.xyz;
 
 			// special case for perspective projection, and segments that terminate either in, or behind, the camera plane
 			// clearly the gpu firmware has a way of addressing this issue when projecting into ndc space
@@ -190,11 +194,9 @@ ShaderLib[ 'line' ] = {
 			offset *= linewidth * 0.5;
 
 			// select end
-			vec4 worldPos = ( position.y < 0.5 ) ? start : end;
+			worldPos = ( position.y < 0.5 ) ? start : end;
 
 			worldPos.xy += offset;
-
-			viewDir = normalize( worldPos.xyz );
 
 			vec4 clip = projectionMatrix * worldPos;
 
@@ -249,6 +251,7 @@ ShaderLib[ 'line' ] = {
 		`
 		uniform vec3 diffuse;
 		uniform float opacity;
+		uniform float linewidth;
 
 		#ifdef USE_DASH
 
@@ -258,7 +261,9 @@ ShaderLib[ 'line' ] = {
 		#endif
 
 		varying float vLineDistance;
-		varying vec3 viewDir;
+		varying vec4 worldPos;
+		varying vec3 worldStart;
+		varying vec3 worldEnd;
 
 		#include <common>
 		#include <color_pars_fragment>
@@ -268,26 +273,33 @@ ShaderLib[ 'line' ] = {
 
 		varying vec2 vUv;
 
-		vec2 closestLineToLine(vec3 v0, vec3 dir0, vec3 v1, vec3 dir1) {
+		vec2 closestLineToLine(vec3 p1, vec3 p2, vec3 p3, vec3 p4) {
 
-			float d, d2;
+			float mua;
+			float mub;
 
-			vec3 v01 = v0 - v1;
-			float d0232 = dot( v01, dir1 );
-			float d3210 = dot( dir1, dir0 );
-			float d3232 = dot( dir1, dir1 );
+			vec3 p13 = p1 - p3;
+			vec3 p43 = p4 - p3;
 
-			float d0210 = dot( v01, dir0 );
-			float d1010 = dot( dir0, dir0 );
-			float denom = d1010 * d3232 - d3210 * d3210;
-			if ( denom != 0.0 ) {
-				d = ( d0232*d3210 - d0210 * d3232 ) / denom;
-			} else {
-				d = 0.0;
-			}
-			d2 = ( d0232 + d * d3210 ) / d3232;
+			vec3 p21 = p2 - p1;
 
-			return vec2( d, d2 );
+			float d1343 = dot( p13, p43 );
+			float d4321 = dot( p43, p21 );
+			float d1321 = dot( p13, p21 );
+			float d4343 = dot( p43, p43 );
+			float d2121 = dot( p21, p21 );
+
+			float denom = d2121 * d4343 - d4321 * d4321;
+
+			float numer = d1343 * d4321 - d1321 * d4343;
+
+			mua = numer / denom;
+			mua = clamp( mua, 0.0, 1.0 );
+			mub = ( d1343 + d4321 * ( mua ) ) / d4343;
+			mub = clamp( mub, 0.0, 1.0 );
+
+			return vec2( mua, mub );
+
 		}
 
 		void main() {
@@ -303,8 +315,18 @@ ShaderLib[ 'line' ] = {
 			#endif
 
 			#ifdef WORLD_UNITS
-				gl_FragColor = vec4( normalize( viewDir ), 1.0 );
-				return;
+
+				vec3 rayEnd = normalize( worldPos.xyz ) * 1000.0;
+				vec3 lineDir = worldEnd - worldStart;
+				vec2 params = closestLineToLine( worldStart, worldEnd, vec3( 0.0, 0.0, 0.0 ), rayEnd );
+
+				vec3 p1 = worldStart + lineDir * params.x;
+				vec3 p2 = rayEnd * params.y;
+				vec3 delta = p1 - p2;
+				float len = length( delta );
+				float norm = len / linewidth;
+
+				if (norm > 0.5) discard;
 
 			#else
 
