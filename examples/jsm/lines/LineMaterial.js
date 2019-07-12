@@ -58,6 +58,7 @@ ShaderLib[ 'line' ] = {
 		attribute vec3 instanceColorEnd;
 
 		varying vec2 vUv;
+		varying vec3 viewDir;
 
 		#ifdef USE_DASH
 
@@ -126,16 +127,39 @@ ShaderLib[ 'line' ] = {
 
 			}
 
+			#ifdef WORLD_UNITS
+			vec3 worldDir = normalize( end.xyz - start.xyz );
+			start.xyz += - worldDir * linewidth * 0.5;
+			end.xyz += worldDir * linewidth * 0.5;
+			#endif
+
 			// clip space
 			vec4 clipStart = projectionMatrix * start;
 			vec4 clipEnd = projectionMatrix * end;
 
 			// ndc space
-			vec2 ndcStart = clipStart.xy / clipStart.w;
-			vec2 ndcEnd = clipEnd.xy / clipEnd.w;
+			vec3 ndcStart = clipStart.xyz / clipStart.w;
+			vec3 ndcEnd = clipEnd.xyz / clipEnd.w;
+
+			#ifdef WORLD_UNITS
+			if ( ndcStart.z < ndcEnd.z ) {
+				vec3 temp3 = ndcStart;
+				ndcStart = ndcEnd;
+				ndcEnd = temp3;
+
+				vec4 temp4 = start;
+				start = end;
+				end = temp4;
+
+				#ifdef USE_COLOR
+				vColor.xyz = ( position.y > 0.5 ) ? instanceColorStart : instanceColorEnd;
+				#endif
+
+			}
+			#endif
 
 			// direction
-			vec2 dir = ndcEnd - ndcStart;
+			vec2 dir = ndcEnd.xy - ndcStart.xy;
 
 			// account for clip-space aspect ratio
 			dir.x *= aspect;
@@ -149,14 +173,16 @@ ShaderLib[ 'line' ] = {
 			// sign flip
 			if ( position.x < 0.0 ) offset *= - 1.0;
 
+			offset -= dir;
+
 			// endcaps
 			if ( position.y < 0.0 ) {
 
-				offset += - dir;
+				offset += dir * 2.0;
 
 			} else if ( position.y > 1.0 ) {
 
-				offset += dir;
+				offset += dir * 2.0;
 
 			}
 
@@ -164,11 +190,13 @@ ShaderLib[ 'line' ] = {
 			offset *= linewidth * 0.5;
 
 			// select end
-			vec4 clip = ( position.y < 0.5 ) ? start : end;
+			vec4 worldPos = ( position.y < 0.5 ) ? start : end;
 
-			clip.xy += offset;
+			worldPos.xy += offset;
 
-			clip = projectionMatrix * clip;
+			viewDir = normalize( worldPos.xyz );
+
+			vec4 clip = projectionMatrix * worldPos;
 
 			#else
 
@@ -230,6 +258,7 @@ ShaderLib[ 'line' ] = {
 		#endif
 
 		varying float vLineDistance;
+		varying vec3 viewDir;
 
 		#include <common>
 		#include <color_pars_fragment>
@@ -238,6 +267,28 @@ ShaderLib[ 'line' ] = {
 		#include <clipping_planes_pars_fragment>
 
 		varying vec2 vUv;
+
+		vec2 closestLineToLine(vec3 v0, vec3 dir0, vec3 v1, vec3 dir1) {
+
+			float d, d2;
+
+			vec3 v01 = v0 - v1;
+			float d0232 = dot( v01, dir1 );
+			float d3210 = dot( dir1, dir0 );
+			float d3232 = dot( dir1, dir1 );
+
+			float d0210 = dot( v01, dir0 );
+			float d1010 = dot( dir0, dir0 );
+			float denom = d1010 * d3232 - d3210 * d3210;
+			if ( denom != 0.0 ) {
+				d = ( d0232*d3210 - d0210 * d3232 ) / denom;
+			} else {
+				d = 0.0;
+			}
+			d2 = ( d0232 + d * d3210 ) / d3232;
+
+			return vec2( d, d2 );
+		}
 
 		void main() {
 
@@ -251,15 +302,23 @@ ShaderLib[ 'line' ] = {
 
 			#endif
 
-			if ( abs( vUv.y ) > 1.0 ) {
+			#ifdef WORLD_UNITS
+				gl_FragColor = vec4( normalize( viewDir ), 1.0 );
+				return;
 
-				float a = vUv.x;
-				float b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;
-				float len2 = a * a + b * b;
+			#else
 
-				if ( len2 > 1.0 ) discard;
+				if ( abs( vUv.y ) > 1.0 ) {
 
-			}
+					float a = vUv.x;
+					float b = ( vUv.y > 0.0 ) ? vUv.y - 1.0 : vUv.y + 1.0;
+					float len2 = a * a + b * b;
+
+					if ( len2 > 1.0 ) discard;
+
+				}
+
+			#endif
 
 			vec4 diffuseColor = vec4( diffuse, opacity );
 
