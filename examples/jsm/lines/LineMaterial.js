@@ -164,12 +164,16 @@ ShaderLib[ 'line' ] = {
 				// sign flip
 				if ( position.x < 0.0 ) offset *= - 1.0;
 
-				// extend the line bounds to encompass  endcaps
-				start.xyz += - worldDir * linewidth * 0.5;
-				end.xyz += worldDir * linewidth * 0.5;
+				#ifndef USE_DASH
 
-				// shift the position of the quad so it hugs the forward edge of the line
-				offset.xy -= dir * dot( worldDir, vec3( 0.0, 0.0, 1.0 ) );
+					// extend the line bounds to encompass  endcaps
+					start.xyz += - worldDir * linewidth * 0.5;
+					end.xyz += worldDir * linewidth * 0.5;
+
+					// shift the position of the quad so it hugs the forward edge of the line
+					offset.xy -= dir * dot( worldDir, vec3( 0.0, 0.0, 1.0 ) );
+
+				#endif
 
 				// endcaps
 				if ( position.y > 1.0 ) {
@@ -185,10 +189,15 @@ ShaderLib[ 'line' ] = {
 				// adjust for linewidth
 				offset *= linewidth * 0.5;
 
+				// set the world position
 				worldPos = ( position.y < 0.5 ) ? start : end;
 				worldPos.xyz += offset;
 
+				// project the worldpos
 				vec4 clip = projectionMatrix * worldPos;
+
+				// shift the depth of the projected points so the line
+				// segements overlap neatly
 				vec3 clipPose = ( position.y < 0.5 ) ? ndcStart : ndcEnd;
 				clip.z = clipPose.z * clip.w;
 
@@ -309,8 +318,7 @@ ShaderLib[ 'line' ] = {
 
 			#ifdef WORLD_UNITS
 
-				// TODO: Find the intersection of the view ray with the surface of the cylinder to get the
-				// line parameter then use that to back out the color and dashes.
+				// Find the closest points on the view ray and the line segment
 				vec3 rayEnd = normalize( worldPos.xyz ) * 1e5;
 				vec3 lineDir = worldEnd - worldStart;
 				vec2 params = closestLineToLine( worldStart, worldEnd, vec3( 0.0, 0.0, 0.0 ), rayEnd );
@@ -321,7 +329,11 @@ ShaderLib[ 'line' ] = {
 				float len = length( delta );
 				float norm = len / linewidth;
 
-				if (norm > 0.5) discard;
+				#ifndef USE_DASH
+
+					if (norm > 0.5) discard;
+
+				#endif
 
 			#else
 
