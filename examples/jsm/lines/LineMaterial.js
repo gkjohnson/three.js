@@ -176,10 +176,10 @@ ShaderLib[ 'line' ] = {
 			dir.x *= aspect;
 			dir = normalize( dir );
 
-			// perpendicular to dir
-			vec2 offset = vec2( dir.y, - dir.x );
-
 			#ifdef WORLD_UNITS
+
+				// perpendicular to dir
+				vec3 offset;// = vec2( dir.y, - dir.x );
 
 				vec3 worldDir = normalize( end.xyz - start.xyz );
 				vec4 extendedStart = start;
@@ -188,25 +188,39 @@ ShaderLib[ 'line' ] = {
 				vec4 extendedEnd = end;
 				extendedEnd.xyz += worldDir * linewidth * 0.5;
 
+
+				if ( position.y < 0.5 ) {
+
+					offset = normalize( cross( normalize( worldStart ), worldDir ) );
+
+				} else {
+
+					offset = normalize( cross( normalize( worldEnd ), worldDir ) );
+
+				}
+
+
 				// sign flip
 				if ( position.x < 0.0 ) offset *= - 1.0;
 
 				vec3 dir3 = normalize( end.xyz - start.xyz );
-				offset -= dir * dot( dir3, vec3( 0.0, 0.0, 1.0 ) );
+				offset.xy -= dir * dot( dir3, vec3( 0.0, 0.0, 1.0 ) );
 
 				// endcaps
 				if ( position.y > 1.0 ) {
 
-					offset += dir * 2.0;
+					offset.xy += dir * 2.0;
 
 				}
 
 				// adjust for linewidth
-				offset *= linewidth * 0.55;
+				offset *= linewidth * 0.5;
 
+				// TODO: See if we can apply offset in clip space instead of
+				// world space because the angle isn't correct
 				// select end
 				worldPos = ( position.y < 0.5 ) ? extendedStart : extendedEnd;
-				worldPos.xy += offset;
+				worldPos.xyz += offset;
 
 				vec4 clip = projectionMatrix * worldPos;
 				vec3 clipPose = ( position.y < 0.5 ) ? ndcStart : ndcEnd;
@@ -214,6 +228,7 @@ ShaderLib[ 'line' ] = {
 
 			#else
 
+				vec2 offset = vec2( dir.y, - dir.x );
 				// undo aspect ratio adjustment
 				dir.x /= aspect;
 				offset.x /= aspect;
