@@ -131,14 +131,6 @@ ShaderLib[ 'line' ] = {
 
 			}
 
-			#ifdef WORLD_UNITS
-
-				vec3 worldDir = normalize( end.xyz - start.xyz );
-				start.xyz += - worldDir * linewidth * 0.5;
-				end.xyz += worldDir * linewidth * 0.5;
-
-			#endif
-
 			// clip space
 			vec4 clipStart = projectionMatrix * start;
 			vec4 clipEnd = projectionMatrix * end;
@@ -189,35 +181,36 @@ ShaderLib[ 'line' ] = {
 
 			#ifdef WORLD_UNITS
 
+				vec3 worldDir = normalize( end.xyz - start.xyz );
+				vec4 extendedStart = start;
+				extendedStart.xyz += - worldDir * linewidth * 0.5;
+
+				vec4 extendedEnd = end;
+				extendedEnd.xyz += worldDir * linewidth * 0.5;
+
 				// sign flip
 				if ( position.x < 0.0 ) offset *= - 1.0;
 
-				// TODO: Generate a orthogonal vector here, instead, the offset
-				// the width of the geometry by that and use that to position the end
-				// cap quads.
 				vec3 dir3 = normalize( end.xyz - start.xyz );
 				offset -= dir * dot( dir3, vec3( 0.0, 0.0, 1.0 ) );
 
 				// endcaps
-				if ( position.y < 0.0 ) {
-
-					offset += dir * 2.0;
-
-				} else if ( position.y > 1.0 ) {
+				if ( position.y > 1.0 ) {
 
 					offset += dir * 2.0;
 
 				}
 
 				// adjust for linewidth
-				offset *= linewidth * 0.5;
+				offset *= linewidth * 0.55;
 
 				// select end
-				worldPos = ( position.y < 0.5 ) ? start : end;
-
+				worldPos = ( position.y < 0.5 ) ? extendedStart : extendedEnd;
 				worldPos.xy += offset;
 
 				vec4 clip = projectionMatrix * worldPos;
+				vec3 clipPose = ( position.y < 0.5 ) ? ndcStart : ndcEnd;
+				clip.z = clipPose.z * clip.w;
 
 			#else
 
