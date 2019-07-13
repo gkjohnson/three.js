@@ -139,36 +139,6 @@ ShaderLib[ 'line' ] = {
 			vec3 ndcStart = clipStart.xyz / clipStart.w;
 			vec3 ndcEnd = clipEnd.xyz / clipEnd.w;
 
-			#ifdef WORLD_UNITS
-
-				if ( ndcStart.z < ndcEnd.z ) {
-
-					vec3 temp3 = ndcStart;
-					ndcStart = ndcEnd;
-					ndcEnd = temp3;
-
-					vec4 temp4 = start;
-					start = end;
-					end = temp4;
-
-					vUv.y *= -1.0;
-
-					#ifdef USE_COLOR
-
-						vColor.xyz = ( position.y > 0.5 ) ? instanceColorStart : instanceColorEnd;
-
-					#endif
-
-					#ifdef USE_DASH
-
-						vLineDistance = ( position.y > 0.5 ) ? dashScale * instanceDistanceStart : dashScale * instanceDistanceEnd;
-
-					#endif
-
-				}
-
-			#endif
-
 			// direction
 			vec2 dir = ndcEnd.xy - ndcStart.xy;
 
@@ -179,47 +149,43 @@ ShaderLib[ 'line' ] = {
 			#ifdef WORLD_UNITS
 
 				// perpendicular to dir
-				vec3 offset;// = vec2( dir.y, - dir.x );
-
 				vec3 worldDir = normalize( end.xyz - start.xyz );
-				vec4 extendedStart = start;
-				extendedStart.xyz += - worldDir * linewidth * 0.5;
-
-				vec4 extendedEnd = end;
-				extendedEnd.xyz += worldDir * linewidth * 0.5;
-
-
+				vec3 offset;
 				if ( position.y < 0.5 ) {
 
-					offset = normalize( cross( normalize( worldStart ), worldDir ) );
+					offset = normalize( cross( start.xyz, worldDir ) );
 
 				} else {
 
-					offset = normalize( cross( normalize( worldEnd ), worldDir ) );
+					offset = normalize( cross( end.xyz, worldDir ) );
 
 				}
-
 
 				// sign flip
 				if ( position.x < 0.0 ) offset *= - 1.0;
 
-				vec3 dir3 = normalize( end.xyz - start.xyz );
-				offset.xy -= dir * dot( dir3, vec3( 0.0, 0.0, 1.0 ) );
+				// extend the line bounds to encompass  endcaps
+				start.xyz += - worldDir * linewidth * 0.5;
+				end.xyz += worldDir * linewidth * 0.5;
+
+				// shift the position of the quad so it hugs the forward edge of the line
+				offset.xy -= dir * dot( worldDir, vec3( 0.0, 0.0, 1.0 ) );
 
 				// endcaps
 				if ( position.y > 1.0 ) {
 
 					offset.xy += dir * 2.0;
 
+				} else if ( position.y < 0.0 ) {
+
+					offset.xy -= dir * 2.0;
+
 				}
 
 				// adjust for linewidth
 				offset *= linewidth * 0.5;
 
-				// TODO: See if we can apply offset in clip space instead of
-				// world space because the angle isn't correct
-				// select end
-				worldPos = ( position.y < 0.5 ) ? extendedStart : extendedEnd;
+				worldPos = ( position.y < 0.5 ) ? start : end;
 				worldPos.xyz += offset;
 
 				vec4 clip = projectionMatrix * worldPos;
@@ -345,7 +311,7 @@ ShaderLib[ 'line' ] = {
 
 				// TODO: Find the intersection of the view ray with the surface of the cylinder to get the
 				// line parameter then use that to back out the color and dashes.
-				vec3 rayEnd = normalize( worldPos.xyz ) * 1000.0;
+				vec3 rayEnd = normalize( worldPos.xyz ) * 1e5;
 				vec3 lineDir = worldEnd - worldStart;
 				vec2 params = closestLineToLine( worldStart, worldEnd, vec3( 0.0, 0.0, 0.0 ), rayEnd );
 
