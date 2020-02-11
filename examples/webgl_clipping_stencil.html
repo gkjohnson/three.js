@@ -113,65 +113,108 @@
 				dirLight.shadow.mapSize.height = 1024;
 				scene.add( dirLight );
 
+				// create the materials to reuse
+				var backSideMaterial = new THREE.MeshBasicMaterial();
+				backSideMaterial.side = THREE.BackSide;
+				backSideMaterial.depthWrite = false;
+				backSideMaterial.depthTest = false;
+				backSideMaterial.colorWrite = false;
+				backSideMaterial.stencilWrite = true;
+				backSideMaterial.stencilFunc = THREE.AlwaysStencilFunc;
+				backSideMaterial.stencilFail = THREE.IncrementWrapStencilOp;
+				backSideMaterial.stencilZFail = THREE.IncrementWrapStencilOp;
+				backSideMaterial.stencilZPass = THREE.IncrementWrapStencilOp;
+
+				var frontSideMaterial = new THREE.MeshBasicMaterial();
+				frontSideMaterial.side = THREE.FrontSide;
+				frontSideMaterial.depthWrite = false;
+				frontSideMaterial.depthTest = false;
+				frontSideMaterial.colorWrite = false;
+				frontSideMaterial.stencilWrite = true;
+				frontSideMaterial.stencilFunc = THREE.AlwaysStencilFunc;
+				frontSideMaterial.stencilFail = THREE.DecrementWrapStencilOp;
+				frontSideMaterial.stencilZFail = THREE.DecrementWrapStencilOp;
+				frontSideMaterial.stencilZPass = THREE.DecrementWrapStencilOp;
+
+				var colorMaterial = new THREE.MeshStandardMaterial();
+				colorMaterial.color.set( 0xE91E63 );
+				colorMaterial.metalness = 0.1;
+				colorMaterial.roughness = 0.75;
+				colorMaterial.stencilWrite = true;
+				colorMaterial.stencilRef = 0;
+				colorMaterial.stencilFunc = THREE.NotEqualStencilFunc;
+				colorMaterial.stencilFail = THREE.ReplaceStencilOp;
+				colorMaterial.stencilZFail = THREE.ReplaceStencilOp;
+				colorMaterial.stencilZPass = THREE.ReplaceStencilOp;
+				
+				var clearMaterial = new THREE.MeshStandardMaterial();
+				clearMaterial.side = THREE.DoubleSide;
+				// clearMaterial.color.set(0x333333)
+				clearMaterial.colorWrite = false;
+				clearMaterial.depthWrite = false;
+				clearMaterial.depthTest = false;
+				clearMaterial.stencilWrite = true;
+				clearMaterial.stencilRef = 0;
+				clearMaterial.stencilFunc = THREE.AlwaysStencilFunc;
+				clearMaterial.stencilFail = THREE.ReplaceStencilOp;
+				clearMaterial.stencilZFail = THREE.ReplaceStencilOp;
+				clearMaterial.stencilZPass = THREE.ReplaceStencilOp;
+
+				// initialize the planes
+
+				var geometry = new THREE.TorusKnotBufferGeometry( 0.4, 0.15, 220, 60 );
+				var planeGeometry = new THREE.PlaneBufferGeometry( 4, 4 );
+				object = new THREE.Group();
 				planes = [
 					new THREE.Plane( new THREE.Vector3( - 1, 0, 0 ), 0 ),
 					new THREE.Plane( new THREE.Vector3( 0, - 1, 0 ), 0 ),
 					new THREE.Plane( new THREE.Vector3( 0, 0, - 1 ), 0 )
 				];
-
-				planeHelpers = planes.map( p => new THREE.PlaneHelper( p, 2, 0xffffff ) );
-				planeHelpers.forEach( ph => {
-
-					ph.visible = false;
-					scene.add( ph );
-
-				} );
-
-				var geometry = new THREE.TorusKnotBufferGeometry( 0.4, 0.15, 220, 60 );
-				object = new THREE.Group();
-				scene.add( object );
-
-				// Set up clip plane rendering
 				planeObjects = [];
-				var planeGeom = new THREE.PlaneBufferGeometry( 4, 4 );
-				for ( var i = 0; i < 3; i ++ ) {
+				planeHelpers = [];
+				for ( var i = 0; i < planes.length; i ++ ) {
 
-					var poGroup = new THREE.Group();
 					var plane = planes[ i ];
-					var stencilGroup = createPlaneStencilGroup( geometry, plane, i + 1 );
+					var planeHelper = new THREE.PlaneHelper( plane, 2, 0xffffff );
+					planeHelper.visible = false;
 
-					// plane is clipped by the other clipping planes
-					var planeMat =
-						new THREE.MeshStandardMaterial( {
+					var backMat = backSideMaterial.clone();
+					backMat.clippingPlanes = [ plane ];
 
-							color: 0xE91E63,
-							metalness: 0.1,
-							roughness: 0.75,
-							clippingPlanes: planes.filter( p => p !== plane ),
+					var frontMat = frontSideMaterial.clone();
+					frontMat.clippingPlanes = [ plane ];
 
-							stencilWrite: true,
-							stencilRef: 0,
-							stencilFunc: THREE.NotEqualStencilFunc,
-							stencilFail: THREE.ReplaceStencilOp,
-							stencilZFail: THREE.ReplaceStencilOp,
-							stencilZPass: THREE.ReplaceStencilOp,
+					var colorMat = colorMaterial.clone();
+					colorMat.clippingPlanes = [
+						planes[ ( i + 1 ) % 3 ],
+						planes[ ( i + 2 ) % 3 ]
+					];
 
-						} );
-					var po = new THREE.Mesh( planeGeom, planeMat );
-					po.onAfterRender = function ( renderer ) {
+					var backMesh = new THREE.Mesh( geometry, backMat );
+					backMesh.renderOrder = 0;
 
-						renderer.clearStencil();
+					var frontMesh = new THREE.Mesh( geometry, frontMat );
+					frontMesh.renderOrder = 1;
 
-					};
-					po.renderOrder = i + 1.1;
+					var colorMesh = new THREE.Mesh( planeGeometry, colorMat );
+					colorMesh.renderOrder = 2;
 
-					object.add( stencilGroup );
-					poGroup.add( po );
-					planeObjects.push( po );
-					scene.add( poGroup );
+					var clearMesh = new THREE.Mesh( planeGeometry, clearMaterial );
+					clearMesh.renderOrder = 3;
+
+					var planeGroup = new THREE.Group();
+					planeGroup.add( colorMesh, clearMesh );
+
+					var renderGroup = new THREE.RenderGroup();
+					renderGroup.add( backMesh, frontMesh, planeGroup );
+
+					object.add( renderGroup );
+					planeObjects.push( planeGroup );
+					scene.add( planeHelper );
+					planeHelpers.push( planeHelper );
 
 				}
-
+				
 				var material = new THREE.MeshStandardMaterial( {
 
 					color: 0xFFC107,
@@ -188,7 +231,7 @@
 				clippedColorFront.castShadow = true;
 				clippedColorFront.renderOrder = 6;
 				object.add( clippedColorFront );
-
+				scene.add( object );
 
 				var ground = new THREE.Mesh(
 					new THREE.PlaneBufferGeometry( 9, 9, 1, 1 ),
@@ -286,12 +329,17 @@
 
 					var plane = planes[ i ];
 					var po = planeObjects[ i ];
+					var parent = po.parent;
+					parent.remove( po );
+
 					plane.coplanarPoint( po.position );
 					po.lookAt(
 						po.position.x - plane.normal.x,
 						po.position.y - plane.normal.y,
 						po.position.z - plane.normal.z,
 					);
+
+					parent.attach( po );
 
 				}
 
