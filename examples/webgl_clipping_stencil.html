@@ -205,7 +205,8 @@
 					var planeGroup = new THREE.Group();
 					planeGroup.add( colorMesh, clearMesh );
 
-					var renderGroup = new THREE.RenderGroup();
+					var renderGroup = new THREE.Group();
+					renderGroup.sortChildren = true;
 					renderGroup.add( backMesh, frontMesh, planeGroup );
 
 					object.add( renderGroup );
