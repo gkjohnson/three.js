@@ -4,15 +4,11 @@
 
 function painterSortStable( a, b ) {
 
-	if ( a.groupOrder !== b.groupOrder ) {
-
-		return a.groupOrder - b.groupOrder;
-
-	} else if ( a.renderOrder !== b.renderOrder ) {
+	if ( a.renderOrder !== b.renderOrder ) {
 
 		return a.renderOrder - b.renderOrder;
 
-	} else if ( a.program !== b.program ) {
+	} else if ( a.program && b.program && a.program !== b.program ) {
 
 		return a.program.id - b.program.id;
 
@@ -34,11 +30,7 @@ function painterSortStable( a, b ) {
 
 function reversePainterSortStable( a, b ) {
 
-	if ( a.groupOrder !== b.groupOrder ) {
-
-		return a.groupOrder - b.groupOrder;
-
-	} else if ( a.renderOrder !== b.renderOrder ) {
+	if ( a.renderOrder !== b.renderOrder ) {
 
 		return a.renderOrder - b.renderOrder;
 
@@ -69,6 +61,9 @@ function WebGLRenderList() {
 	var opaque = [];
 	var transparent = [];
 
+	var currOpaque = opaque;
+	var currTransparent = transparent;
+
 	var defaultProgram = { id: - 1 };
 
 	function init() {
@@ -80,6 +75,9 @@ function WebGLRenderList() {
 		renderGroupStack.length = 0;
 		opaque.length = 0;
 		transparent.length = 0;
+
+		currOpaque = opaque;
+		currTransparent = transparent;
 
 	}
 
@@ -112,11 +110,11 @@ function WebGLRenderList() {
 
 		renderGroupItemIndex ++;
 
-		return renderGroupItem
+		return renderGroupItem;
 
 	}
 
-	function getNextRenderItem( object, geometry, material, groupOrder, z, group ) {
+	function getNextRenderItem( object, geometry, material, z, group ) {
 
 		var renderItem = renderItems[ renderItemsIndex ];
 
@@ -128,8 +126,7 @@ function WebGLRenderList() {
 				geometry: geometry,
 				material: material,
 				program: material.program || defaultProgram,
-				groupOrder: groupOrder,
-				renderOrder: object.renderOrder,
+				renderOrder: object.renderOrder || 0,
 				z: z,
 				group: group
 			};
@@ -143,8 +140,7 @@ function WebGLRenderList() {
 			renderItem.geometry = geometry;
 			renderItem.material = material;
 			renderItem.program = material.program || defaultProgram;
-			renderItem.groupOrder = groupOrder;
-			renderItem.renderOrder = object.renderOrder;
+			renderItem.renderOrder = object.renderOrder || 0;
 			renderItem.z = z;
 			renderItem.group = group;
 
@@ -156,35 +152,11 @@ function WebGLRenderList() {
 
 	}
 
-	function push( object, geometry, material, groupOrder, z, group ) {
+	function push( object, geometry, material, z, group ) {
 
-		var renderItem = getNextRenderItem( object, geometry, material, groupOrder, z, group );
+		var renderItem = getNextRenderItem( object, geometry, material, z, group );
 
-		if ( material.transparent === true ) {
-
-			if ( transparentRenderGroupStack.length !== 0 ) {
-
-				transparentRenderGroupStack[ transparentRenderGroupStack.length - 1 ].transparent.push( renderItem );
-
-			} else {
-
-				transparent.push( renderItem );
-
-			}
-
-		} else {
-
-			if ( renderGroupStack.length !== 0 ) {
-
-				renderGroupStack[ renderGroupStack.length - 1 ].opaque.push( renderItem );
-
-			} else {
-
-				opaque.push( renderItem );
-
-			}
-
-		}
+		( material.transparent === true ? currTransparent : currOpaque ).push( renderItem );
 
 	}
 
@@ -192,21 +164,15 @@ function WebGLRenderList() {
 
 		var renderGroupItem = getNextRenderGroupItem( object );
 
-		if ( renderGroupStack.length !== 0 ) {
-
-			renderGroupStack[ renderGroupStack.length - 1 ].opaque.push( renderGroupItem );
-
-		} else {
-
-			opaque.push( renderGroupItem );
-
-		}
+		currOpaque.push( renderGroupItem );
+		currOpaque = renderGroupItem.opaque;
 
 		usedRenderGroups.push( renderGroupItem );
 		renderGroupStack.push( renderGroupItem );
 
 		if ( object.excludeTransparent === false ) {
 
+			currTransparent = renderGroupItem.transparent;
 			transparentRenderGroupStack.push( object );
 
 		}
@@ -216,18 +182,26 @@ function WebGLRenderList() {
 	function popRenderGroup() {
 
 		var removedItem = renderGroupStack.pop();
+		currOpaque =
+			renderGroupStack.length ?
+				renderGroupStack[ renderGroupStack.length - 1 ].opaque :
+				opaque;
 
 		if ( transparentRenderGroupStack[ transparentRenderGroupStack.length - 1 ] === removedItem ) {
 
 			transparentRenderGroupStack.pop();
+			currTransparent =
+				transparentRenderGroupStack ?
+					transparentRenderGroupStack[ transparentRenderGroupStack.length - 1 ].transparent :
+					transparent;
 
 		}
 
 	}
 
-	function unshift( object, geometry, material, groupOrder, z, group ) {
+	function unshift( object, geometry, material, z, group ) {
 
-		var renderItem = getNextRenderItem( object, geometry, material, groupOrder, z, group );
+		var renderItem = getNextRenderItem( object, geometry, material, z, group );
 
 		( material.transparent === true ? transparent : opaque ).unshift( renderItem );
 
