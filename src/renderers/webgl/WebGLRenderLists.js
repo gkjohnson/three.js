@@ -141,7 +141,7 @@ function WebGLRenderList() {
 	// when the count of objects in a scene is reduced
 	function cleanup() {
 
-		for ( var i = renderItemsIndex; i < renderItems.length; i ++ ) {
+		for ( var i = renderItemsIndex, l = renderItems.length; i < l; i ++ ) {
 
 			var renderItem = renderItems[ i ];
 			if ( renderItem.id === null ) break;
