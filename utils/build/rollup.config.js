@@ -185,7 +185,7 @@ function glsl() {
 						.replace( /[ \t]*\/\/.*\n/g, '' ) // remove //
 						.replace( /[ \t]*\/\*[\s\S]*?\*\//g, '' ) // remove /* */
 						.replace( /\n[ \t\n]+/g, '\n' ) // # \n followed by whitespace to \n
-						.replace( /[ \t]*([!=?:*/[\]()])[ \t]*/g, '$1' ) // trim operators with spaces
+						.replace( /[ \t]*([+\-,;!=?:*/[\]()])[ \t]*/g, '$1' ) // trim operators with spaces
 				);
 
 			} );
