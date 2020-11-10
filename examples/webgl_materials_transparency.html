@@ -48,6 +48,7 @@
 
 			var container, stats;
 			var camera, scene, renderer, controls;
+			var sphereGroup;
 
 			init();
 			animate();
@@ -101,15 +102,22 @@
 
 				} );
 
+				sphereGroup = new THREE.Group();
+				scene.add( sphereGroup );
+
 				var mesh = new THREE.Mesh( geometry, material1 );
 				mesh.position.x = - 25.0;
+				mesh.receiveShadow = true;
 				mesh.castShadow = true;
-				scene.add( mesh );
+				sphereGroup.add( mesh );
 
 				var mesh = new THREE.Mesh( geometry, material2 );
 				mesh.position.x = 25.0;
+				mesh.receiveShadow = true;
 				mesh.castShadow = true;
-				scene.add( mesh );
+				sphereGroup.add( mesh );
+
+				
 
 				//
 
@@ -205,18 +213,18 @@
 
 			function render() {
 
-				for ( var i = 0, l = scene.children.length; i < l; i ++ ) {
+				sphereGroup.children.forEach( object => {
 
-					var object = scene.children[ i ];
+					object.rotation.x = performance.now() * 0.0002;
+					object.rotation.y = - performance.now() * 0.0002;
 
-					if ( object.geometry instanceof THREE.SphereBufferGeometry ) {
+				} );
+				
+				// sphereGroup.rotation.y = - performance.now() * 0.001;
+				sphereGroup.rotation.y = Math.PI / 2;
+				sphereGroup.rotation.x = performance.now() * 0.001;
 
-						object.rotation.x = performance.now() * 0.0002;
-						object.rotation.y = - performance.now() * 0.0002;
 
-					}
-
-				}
 
 				renderer.render( scene, camera );
 
