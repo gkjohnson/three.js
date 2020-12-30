@@ -60,7 +60,7 @@ function Material() {
 	this.dithering = false;
 
 	this.alphaTest = 0;
-	this.premultipliedAlpha = false;
+	this.premultipliedAlpha = true;
 
 	this.visible = true;
 
