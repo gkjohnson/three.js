@@ -3,7 +3,7 @@ import { ShaderPass } from './ShaderPass.js';
 const LUTShader = {
 
 	defines: {
-		USE_3DTEXTURE: 1,
+		USE_3DTEXTURE: 0,
 	},
 
 	uniforms: {
@@ -115,26 +115,23 @@ class LUTPass extends ShaderPass {
 			material.uniforms.lut3d.value = null;
 			material.uniforms.lut.value = null;
 
-			if ( v ) {
+			const is3dTexture = Boolean( v && v.isDataTexture3D );
+			const is3dTextureDefine = is3dTexture ? 1 : 0;
+			if ( is3dTextureDefine !== material.defines.USE_3DTEXTURE ) {
 
-				const is3dTextureDefine = v.isDataTexture3D ? 1 : 0;
-				if ( is3dTextureDefine !== material.defines.USE_3DTEXTURE ) {
+				material.defines.USE_3DTEXTURE = is3dTextureDefine;
+				material.needsUpdate = true;
 
-					material.defines.USE_3DTEXTURE = is3dTextureDefine;
-					material.needsUpdate = true;
+			}
 
-				}
+			material.uniforms.lutSize.value = v.image.width;
+			if ( isDataTexture3D ) {
 
-				material.uniforms.lutSize.value = v.image.width;
-				if ( v.isDataTexture3D ) {
+				material.uniforms.lut3d.value = v;
 
-					material.uniforms.lut3d.value = v;
+			} else {
 
-				} else {
-
-					material.uniforms.lut.value = v;
-
-				}
+				material.uniforms.lut.value = v;
 
 			}
 
