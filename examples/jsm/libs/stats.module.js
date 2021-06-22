@@ -107,6 +107,13 @@ var Stats = function () {
 
 Stats.Panel = function ( name, fg, bg ) {
 
+	function toFixed( num, dec ) {
+
+		var mult = Math.pow( 10, dec );
+		return Math.round( num * mult ) / mult;
+
+	}
+	
 	var min = Infinity, max = 0, round = Math.round;
 	var PR = round( window.devicePixelRatio || 1 );
 
@@ -138,9 +145,13 @@ Stats.Panel = function ( name, fg, bg ) {
 	return {
 
 		dom: canvas,
+		
+		decimals: 0,
 
 		update: function ( value, maxValue ) {
 
+			var decimals = this.decimals;
+			
 			min = Math.min( min, value );
 			max = Math.max( max, value );
 
@@ -148,7 +159,7 @@ Stats.Panel = function ( name, fg, bg ) {
 			context.globalAlpha = 1;
 			context.fillRect( 0, 0, WIDTH, GRAPH_Y );
 			context.fillStyle = fg;
-			context.fillText( round( value ) + ' ' + name + ' (' + round( min ) + '-' + round( max ) + ')', TEXT_X, TEXT_Y );
+			context.fillText( toFixed( value, decimals ) + ' ' + name + ' (' + toFixed( min, decimals ) + '-' + toFixed( max, decimals ) + ')', TEXT_X, TEXT_Y );
 
 			context.drawImage( canvas, GRAPH_X + PR, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT, GRAPH_X, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT );
 
