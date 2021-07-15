@@ -22,9 +22,7 @@
 
 			import { GUI } from './jsm/libs/dat.gui.module.js';
 			import { OrbitControls } from './jsm/controls/OrbitControls.js';
-			import { Line2 } from './jsm/lines/Line2.js';
-			import { LineMaterial } from './jsm/lines/LineMaterial.js';
-			import { LineGeometry } from './jsm/lines/LineGeometry.js';
+			import { FatLine, FatLineMaterial, FatLineGeometry, FatLineSegmentsGeometry } from './jsm/lines/FatLine.js';
 			import { GeometryUtils } from './jsm/utils/GeometryUtils.js';
 
 			let line, renderer, scene, camera, camera2, controls;
@@ -32,6 +30,8 @@
 			let matLine, matLineBasic, matLineDashed;
 			let stats, gpuPanel;
 			let gui;
+			let map, alphaMap;
+			let posArray, positions, colors, geometry;
 
 			// viewport
 			let insetWidth;
@@ -63,13 +63,13 @@
 
 				// Position and THREE.Color Data
 
-				const positions = [];
-				const colors = [];
+				positions = [];
+				colors = [];
 
-				const points = GeometryUtils.hilbert3D( new THREE.Vector3( 0, 0, 0 ), 20.0, 1, 0, 1, 2, 3, 4, 5, 6, 7 );
+				const points = GeometryUtils.hilbert3D( new THREE.Vector3( 0, 0, 0 ), 20.0 );
 
 				const spline = new THREE.CatmullRomCurve3( points );
-				const divisions = Math.round( 12 * points.length );
+				const divisions = Math.round( /*12*/ 1 * points.length ); // a more realistic use-case, IMHO
 				const point = new THREE.Vector3();
 				const color = new THREE.Color();
 
@@ -86,24 +86,61 @@
 				}
 
 
-				// Line2 ( LineGeometry, LineMaterial )
+				// FatLine ( FatLineGeometry, FatLineMaterial )
 
-				const geometry = new LineGeometry();
+				geometry = new FatLineGeometry();
 				geometry.setPositions( positions );
 				geometry.setColors( colors );
 
-				matLine = new LineMaterial( {
+				alphaMap = new THREE.DataTexture( new Uint8Array( [ 255, 255, 255, 255, 0, 0, 255, 0, 0 ] ), 1, 9, THREE.LuminanceFormat );
+				alphaMap.wrapS = alphaMap.wrapT = THREE.RepeatWrapping;
+				alphaMap.offset.set( 0, 0 ); // x: width, y: length
+				alphaMap.repeat.set( 1, 2 );
+				alphaMap.updateMatrix(); // required for non-built-in materials
+				alphaMap.generateMipmaps = false;
+				alphaMap.minFilter = THREE.NearestFilter; // Nearest required for small textures, o.w. blending
+				alphaMap.magFilter = THREE.NearestFilter;
+
+				map = new THREE.DataTexture( new Uint8Array( [ 255, 0, 0, 255, 255, 255 ] ), 1, 2, THREE.RGBFormat ); // red/black
+				//map = new THREE.DataTexture( new Uint8Array( [ 255, 0, 0, 128, 255, 255, 255, 128 ] ), 1, 2, THREE.RGBAFormat ); // with alpha
+				//map = new THREE.DataTexture( new Uint8Array( [ 255, 0, 0, 255, 255, 255 ] ), 2, 1, THREE.RGBFormat ); // lengthwise
+				map.wrapS = map.wrapT = THREE.RepeatWrapping;
+				map.offset.set( 0.5, 0 ); // x: width, y: length
+				map.repeat.set( 0.5, 1 );
+				map.updateMatrix(); // required for non-built-in materials
+				map.generateMipmaps = false;
+				map.minFilter = THREE.NearestFilter;
+				map.magFilter = THREE.NearestFilter;
+
+				matLine = new FatLineMaterial( {
 
 					color: 0xffffff,
 					linewidth: 5, // in pixels
-					vertexColors: true,
+					//vertexColors: true,
+	
 					//resolution:  // to be set by renderer, eventually
+					//endCaps: false, // todo -- add it... or as a DEFINE
 					dashed: false,
-					alphaToCoverage: true,
+
+					//map: map,
+
+					alphaMap: alphaMap, // lots of artifacts in endCaps; dashes look better -- support anyway for dot-dash?...
+					alphaTest: 0.5,
+
+					alphaToCoverage: false,
+
+					//depthWrite: false, // optional if transparent
+					//transparent: true,
+					//opacity: 0.7
 
 				} );
 
-				line = new Line2( geometry, matLine );
+				// note: uvTransform is automatically pushed to the GPU for ShaderMaterial, but the app must
+				// (1) compute uvTransform from the appropriate map.matrix
+				// (2) compute map.matrix from the appropriate map.offset/repeat/rotation
+				matLine.uniforms.uvTransform.value.copy( matLine.map ? map.matrix : alphaMap.matrix );
+
+				line = new FatLine( geometry, matLine );
 				line.computeLineDistances();
 				line.scale.set( 1, 1, 1 );
 				scene.add( line );
@@ -115,8 +152,8 @@
 				geo.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
 				geo.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
 
-				matLineBasic = new THREE.LineBasicMaterial( { vertexColors: true } );
-				matLineDashed = new THREE.LineDashedMaterial( { vertexColors: true, scale: 2, dashSize: 1, gapSize: 1 } );
+				matLineBasic = new THREE.LineBasicMaterial( { vertexColors: true, transparent: true } );
+				matLineDashed = new THREE.LineDashedMaterial( { vertexColors: true, transparent: true, scale: 2, dashSize: 1, gapSize: 1 } );
 
 				line1 = new THREE.Line( geo, matLineBasic );
 				line1.computeLineDistances();
@@ -157,6 +194,23 @@
 			function animate() {
 
 				requestAnimationFrame( animate );
+
+				// test - works!
+				//for ( let i = 0, l = positions.length; i < l; i +=3 ) {
+
+				//	positions[ i + 1 ] += 0.01;
+
+				//}
+				//geometry.setPositions( positions );
+				//geometry.setColors( colors );
+
+				// test - works, but some artifacts
+				matLine.dashOffset -= 0.01;
+
+				// test - works
+				//matLine.alphaMap.offset.y -= 0.01;
+				//matLine.alphaMap.updateMatrix();
+				//matLine.uniforms.uvTransform.value.copy( alphaMap.matrix );
 
 				stats.update();
 
@@ -206,13 +260,13 @@
 				const param = {
 					'line type': 0,
 					'width (px)': 5,
-					'alphaToCoverage': true,
+					'alphaToCoverage': false,
 					'dashed': false,
 					'dash scale': 1,
 					'dash / gap': 1
 				};
 
-				gui.add( param, 'line type', { 'LineGeometry': 0, 'gl.LINE': 1 } ).onChange( function ( val ) {
+				gui.add( param, 'line type', { 'FatLineGeometry': 0, 'gl.LINE': 1 } ).onChange( function ( val ) {
 
 					switch ( val ) {
 
@@ -234,7 +288,7 @@
 
 				} );
 
-				gui.add( param, 'width (px)', 1, 10 ).onChange( function ( val ) {
+				gui.add( param, 'width (px)', 1, 20, 1 ).onChange( function ( val ) {
 
 					matLine.linewidth = val;
 

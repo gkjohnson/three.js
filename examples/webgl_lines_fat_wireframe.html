@@ -11,7 +11,7 @@
 
 		<div id="container"></div>
 
-		<div id="info"><a href="https://threejs.org" target="_blank">three.js</a> - fat lines</div>
+		<div id="info"><a href="https://threejs.org" target="_blank">three.js</a> - fat wireframe</div>
 
 		<script type="module">
 
@@ -21,9 +21,10 @@
 
 			import { GUI } from './jsm/libs/dat.gui.module.js';
 			import { OrbitControls } from './jsm/controls/OrbitControls.js';
-			import { LineMaterial } from './jsm/lines/LineMaterial.js';
-			import { Wireframe } from './jsm/lines/Wireframe.js';
-			import { WireframeGeometry2 } from './jsm/lines/WireframeGeometry2.js';
+			//import { LineMaterial } from './jsm/lines/LineMaterial.js';
+			//import { Wireframe } from './jsm/lines/Wireframe.js';
+			//import { WireframeGeometry2 } from './jsm/lines/WireframeGeometry2.js';
+			import { FatWireframe, FatLineMaterial, FatWireframeGeometry } from './jsm/lines/FatLine.js';
 
 			let wireframe, renderer, scene, camera, camera2, controls;
 			let wireframe1;
@@ -59,32 +60,31 @@
 				controls.maxDistance = 500;
 
 
-				// Wireframe ( WireframeGeometry2, LineMaterial )
+				// FatWireframe ( FatWireframeGeometry, FatLineMaterial )
 
 				let geo = new THREE.IcosahedronGeometry( 20, 1 );
 
-				const geometry = new WireframeGeometry2( geo );
+				const geometry = new FatWireframeGeometry( geo );
 
-				matLine = new LineMaterial( {
+				matLine = new FatLineMaterial( {
 
-					color: 0x4080ff,
+					color: 0xffffff,
 					linewidth: 5, // in pixels
 					//resolution:  // to be set by renderer, eventually
 					dashed: false
 
 				} );
 
-				wireframe = new Wireframe( geometry, matLine );
+				wireframe = new FatWireframe( geometry, matLine );
 				wireframe.computeLineDistances();
 				wireframe.scale.set( 1, 1, 1 );
 				scene.add( wireframe );
-
 
 				// Line ( THREE.WireframeGeometry, THREE.LineBasicMaterial ) - rendered with gl.LINE
 
 				geo = new THREE.WireframeGeometry( geo );
 
-				matLineBasic = new THREE.LineBasicMaterial( { color: 0x4080ff } );
+				matLineBasic = new THREE.LineBasicMaterial( { color: 0xffffff } );
 				matLineDashed = new THREE.LineDashedMaterial( { scale: 2, dashSize: 1, gapSize: 1 } );
 
 				wireframe1 = new THREE.LineSegments( geo, matLineBasic );
@@ -175,7 +175,7 @@
 				};
 
 
-				gui.add( param, 'line type', { 'LineGeometry': 0, 'gl.LINE': 1 } ).onChange( function ( val ) {
+				gui.add( param, 'line type', { 'FatWireframe': 0, 'gl.LINE': 1 } ).onChange( function ( val ) {
 
 					switch ( val ) {
 
