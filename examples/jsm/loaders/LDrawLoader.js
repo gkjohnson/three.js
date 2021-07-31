@@ -316,6 +316,9 @@ function smoothNormals( faces, lineSegments ) {
 					let sharedNormal1 = vertNormals[ index ] || otherNormals[ otherNext ];
 					if ( sharedNormal1 === null ) {
 
+						// it's possible to encounter an edge of a triangle that has already been traversed meaning
+						// both edges already have different normals defined and shared. To work around this we create
+						// a wrapper object so when those edges are merged the normals can be updated everywhere.
 						sharedNormal1 = { norm: new Vector3() };
 						normals.push( sharedNormal1.norm );
 
@@ -560,7 +563,13 @@ function createObject( elements, elementSize, isConditionalSegments = false, tot
 
 			for ( let j = 0, l = elemNormals.length; j < l; j ++ ) {
 
-				const n = elemNormals[ j ]?.norm || elem.faceNormal;
+				let n = elem.faceNormal;
+				if ( elemNormals[ j ] ) {
+
+					n = elemNormals[ j ].norm;
+
+				}
+
 				const index = offset + j * 3;
 				normals[ index + 0 ] = n.x;
 				normals[ index + 1 ] = n.y;
