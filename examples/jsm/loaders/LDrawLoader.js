@@ -716,6 +716,44 @@ class LDrawLoader extends Loader {
 		// If this flag is set to true the vertex normals will be smoothed.
 		this.smoothNormals = true;
 
+		// The path to load parts from the LDraw parts library from.
+		this.partsLibraryPath = '';
+
+	}
+
+	setPartsLibraryPath( path ) {
+
+		this.partsLibraryPath = path;
+		return this;
+
+	}
+
+	async preloadMaterials( url ) {
+
+		const fileLoader = new FileLoader( this.manager );
+		fileLoader.setPath( this.path );
+		fileLoader.setRequestHeader( this.requestHeader );
+		fileLoader.setWithCredentials( this.withCredentials );
+
+		const text = await fileLoader.loadAsync( url );
+		const colorLineRegex = /^0 !COLOUR/;
+		const lines = text.split( /[\n\r]/g );
+		const materials = [];
+		for ( let i = 0, l = lines.length; i < l; i ++ ) {
+
+			const line = lines[ l ];
+			if ( colorLineRegex.test( line ) ) {
+
+				const directive = line.replace( colorLineRegex, '' );
+				const material = this.parseColourMetaDirective( new LineParser( directive ) );
+				materials.push( material );
+
+			}
+
+		}
+
+		this.setMaterials( materials );
+
 	}
 
 	load( url, onLoad, onProgress, onError ) {
@@ -2017,7 +2055,7 @@ class LDrawLoader extends Loader {
 			// Use another file loader here so we can keep track of the subobject information
 			// and use it when processing the next model.
 			const fileLoader = new FileLoader( scope.manager );
-			fileLoader.setPath( scope.path );
+			fileLoader.setPath( scope.partsLibraryPath );
 			fileLoader.setRequestHeader( scope.requestHeader );
 			fileLoader.setWithCredentials( scope.withCredentials );
 			fileLoader.load( subobjectURL, function ( text ) {
