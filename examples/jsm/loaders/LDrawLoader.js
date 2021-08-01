@@ -741,7 +741,7 @@ class LDrawLoader extends Loader {
 		const materials = [];
 		for ( let i = 0, l = lines.length; i < l; i ++ ) {
 
-			const line = lines[ l ];
+			const line = lines[ i ];
 			if ( colorLineRegex.test( line ) ) {
 
 				const directive = line.replace( colorLineRegex, '' );
