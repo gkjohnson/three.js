@@ -62,11 +62,11 @@
 	<script id="fs" type="x-shader/x-fragment">
 	precision highp float;
 	precision highp int;
-	precision highp sampler2DArray;
+	precision highp sampler3D;
 
-	uniform sampler2DArray diffuse;
+	uniform sampler3D diffuse;
 	in vec2 vUv;
-	uniform int depth;
+	uniform float depth;
 
 	void main() {
 
@@ -139,7 +139,7 @@
 			const postProcessScene = new THREE.Scene();
 			const postProcessCamera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
 
-			const renderTarget = new THREE.WebGLArrayRenderTarget( DIMENSIONS.width, DIMENSIONS.height, DIMENSIONS.depth );
+			const renderTarget = new THREE.WebGL3DRenderTarget( DIMENSIONS.width, DIMENSIONS.height, DIMENSIONS.depth );
 			renderTarget.texture.format = THREE.RedFormat;
 
 			const postProcessMaterial = new THREE.ShaderMaterial( {
@@ -283,7 +283,9 @@
 
 				// Step 2 - Renders the scene containing the plane with a material
 				// sampling the render target texture.
+				mesh.material.uniforms[ 'depth' ].value /= DIMENSIONS.depth;
 				renderer.render( scene, camera );
+				mesh.material.uniforms[ 'depth' ].value *= DIMENSIONS.depth;
 
 			}
 
