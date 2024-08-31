@@ -56,6 +56,23 @@ class Raycaster {
 
 	}
 
+	setFromCameraFrustum( coords, camera ) {
+
+		const { origin, direction } = this.ray;
+		origin
+			.set( coords.x, coords.y, - 1 )
+			.unproject( camera );
+
+		direction
+			.set( coords.x, coords.y, 0 )
+			.unproject( camera )
+			.sub( origin )
+			.normalize();
+
+		this.camera = camera;
+
+	}
+
 	setFromXRController( controller ) {
 
 		_matrix.identity().extractRotation( controller.matrixWorld );
