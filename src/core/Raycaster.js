@@ -59,6 +59,8 @@ class Raycaster {
 	setFromCameraFrustum( coords, camera ) {
 
 		const { origin, direction } = this.ray;
+
+		// get the origin and direction of the frustum ray
 		origin
 			.set( coords.x, coords.y, - 1 )
 			.unproject( camera );
@@ -66,8 +68,13 @@ class Raycaster {
 		direction
 			.set( coords.x, coords.y, 0 )
 			.unproject( camera )
-			.sub( origin )
-			.normalize();
+			.sub( origin );
+
+		// compute the far value based on the distance from point on the near
+		// plane and point on the far plane. Then normalize the direction.
+		this.near = 0;
+		this.far = direction.length();
+		direction.normalize();
 
 		this.camera = camera;
 
