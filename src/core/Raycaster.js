@@ -66,7 +66,7 @@ class Raycaster {
 			.unproject( camera );
 
 		direction
-			.set( coords.x, coords.y, 0 )
+			.set( coords.x, coords.y, 1 )
 			.unproject( camera )
 			.sub( origin );
 
