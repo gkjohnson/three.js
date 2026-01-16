@@ -28753,6 +28753,14 @@ class Geometries extends DataMap {
 		 */
 		this.attributeCall = new WeakMap();
 
+		/**
+		 * Stores the event listeners attached to geometries.
+		 *
+		 * @private
+		 * @type {Map<BufferGeometry,Function>}
+		 */
+		this._geometryDisposeListeners = new Map();
+
 	}
 
 	/**
@@ -28825,9 +28833,15 @@ class Geometries extends DataMap {
 
 			geometry.removeEventListener( 'dispose', onDispose );
 
+			this._geometryDisposeListeners.delete( geometry );
+
 		};
 
 		geometry.addEventListener( 'dispose', onDispose );
+
+		// see #31798 why tracking separate remove listeners is required right now
+		// TODO: Re-evaluate how onDispose() is managed in this component
+		this._geometryDisposeListeners.set( geometry, onDispose );
 
 	}
 
@@ -28972,6 +28986,18 @@ class Geometries extends DataMap {
 		}
 
 		return index;
+
+	}
+
+	dispose() {
+
+		for ( const [ geometry, onDispose ] of this._geometryDisposeListeners.entries() ) {
+
+			geometry.removeEventListener( 'dispose', onDispose );
+
+		}
+
+		this._geometryDisposeListeners.clear();
 
 	}
 
@@ -55968,6 +55994,7 @@ class Renderer {
 
 			this._animation.dispose();
 			this._objects.dispose();
+			this._geometries.dispose();
 			this._pipelines.dispose();
 			this._nodes.dispose();
 			this._bindings.dispose();

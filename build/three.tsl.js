@@ -3,7 +3,7 @@
  * Copyright 2010-2025 Three.js Authors
  * SPDX-License-Identifier: MIT
  */
-import { TSL } from 'three/webgpu';
+import { TSL } from 'three';
 
 const BRDF_GGX = TSL.BRDF_GGX;
 const BRDF_Lambert = TSL.BRDF_Lambert;
