@@ -4,6 +4,9 @@ export default /* glsl */`
 	uniform sampler2D bumpMap;
 	uniform float bumpScale;
 
+	// relative determinant below which the surface is considered edge-on
+	const float BUMP_DEGENERATE_EPSILON = 1e-3;
+
 	// Bump Mapping Unparametrized Surfaces on the GPU by Morten S. Mikkelsen
 	// https://mmikk.github.io/papers3d/mm_sfgrad_bump.pdf
 
@@ -40,6 +43,14 @@ export default /* glsl */`
 		vec3 R2 = cross( vN, vSigmaX );
 
 		float fDet = dot( vSigmaX, R1 ) * faceDirection;
+
+		// surfaces seen edge-on have a near zero determinant that blows the gradient up into a broken
+		// normal, so they keep the surface normal
+		if ( abs( fDet ) < BUMP_DEGENERATE_EPSILON * length( vSigmaX ) * length( vSigmaY ) ) {
+
+			return surf_norm;
+
+		}
 
 		vec3 vGrad = sign( fDet ) * ( dHdxy.x * R1 + dHdxy.y * R2 );
 		return normalize( abs( fDet ) * surf_norm - vGrad );

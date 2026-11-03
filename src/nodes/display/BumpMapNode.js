@@ -4,7 +4,10 @@ import { normalView } from '../accessors/Normal.js';
 import { positionView } from '../accessors/Position.js';
 import { textureSize } from '../accessors/TextureSizeNode.js';
 import { faceDirection } from './FrontFacingNode.js';
-import { Fn, nodeProxy, float, vec2 } from '../tsl/TSLBase.js';
+import { Fn, nodeProxy, float, vec2, select } from '../tsl/TSLBase.js';
+
+// relative determinant below which the surface is considered edge-on
+const BUMP_DEGENERATE_EPSILON = 1e-3;
 
 // Bump Mapping Unparametrized Surfaces on the GPU by Morten S. Mikkelsen
 // https://mmikk.github.io/papers3d/mm_sfgrad_bump.pdf
@@ -82,7 +85,11 @@ const perturbNormalArb = /*@__PURE__*/ Fn( ( inputs ) => {
 
 	const vGrad = fDet.sign().mul( dHdxy.x.mul( R1 ).add( dHdxy.y.mul( R2 ) ) );
 
-	return fDet.abs().mul( surf_norm ).sub( vGrad ).normalize();
+	// surfaces seen edge-on have a near zero determinant that blows the gradient up into a broken
+	// normal, so they keep the surface normal
+	const isDegenerate = fDet.abs().lessThan( vSigmaX.length().mul( vSigmaY.length() ).mul( BUMP_DEGENERATE_EPSILON ) );
+
+	return select( isDegenerate, surf_norm, fDet.abs().mul( surf_norm ).sub( vGrad ).normalize() );
 
 } );
 
