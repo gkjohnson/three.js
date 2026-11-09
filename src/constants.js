@@ -1656,17 +1656,6 @@ export const WebGLCoordinateSystem = 2000;
 export const WebGPUCoordinateSystem = 2001;
 
 /**
- * Represents the different timestamp query types.
- *
- * @type {ConstantsTimestampQuery}
- * @constant
- */
-export const TimestampQuery = {
-	COMPUTE: 'compute',
-	RENDER: 'render'
-};
-
-/**
  * Represents mouse buttons and interaction types in context of controls.
  *
  * @type {ConstantsInterpolationSamplingType}
@@ -1734,14 +1723,6 @@ export const RenderObjectRefreshType = {
  * @property {number} PAN - A pan interaction.
  * @property {number} DOLLY_PAN - The dolly-pan interaction.
  * @property {number} DOLLY_ROTATE - A dolly-rotate interaction.
- **/
-
-/**
- * This type represents the different timestamp query types.
- *
- * @typedef {Object} ConstantsTimestampQuery
- * @property {string} COMPUTE - A `compute` timestamp query.
- * @property {string} RENDER - A `render` timestamp query.
  **/
 
 /**

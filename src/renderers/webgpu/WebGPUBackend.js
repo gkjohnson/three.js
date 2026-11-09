@@ -13,9 +13,8 @@ import WebGPUCapabilities from './utils/WebGPUCapabilities.js';
 import WebGPUPipelineUtils from './utils/WebGPUPipelineUtils.js';
 import WebGPUTextureUtils from './utils/WebGPUTextureUtils.js';
 
-import { WebGPUCoordinateSystem, TimestampQuery, REVISION, HalfFloatType, Compatibility, CustomBlending } from '../../constants.js';
+import { WebGPUCoordinateSystem, REVISION, HalfFloatType, Compatibility, CustomBlending } from '../../constants.js';
 import { Color } from '../../math/Color.js';
-import WebGPUTimestampQueryPool from './utils/WebGPUTimestampQueryPool.js';
 import { error, warnOnce } from '../../utils.js';
 
 import GPUBufferDescriptor from './descriptors/GPUBufferDescriptor.js';
@@ -69,7 +68,6 @@ class WebGPUBackend extends Backend {
 	 * @property {boolean} [antialias=false] - Whether MSAA as the default anti-aliasing should be enabled or not.
 	 * @property {number} [samples=0] - When `antialias` is `true`, `4` samples are used by default. Set this parameter to any other integer value than 0 to overwrite the default.
 	 * @property {boolean} [forceWebGL=false] - If set to `true`, the renderer uses a WebGL 2 backend no matter if WebGPU is supported or not.
-	 * @property {boolean} [trackTimestamp=false] - Whether to track timestamps with a Timestamp Query API or not.
 	 * @property {string} [powerPreference=undefined] - The power preference.
 	 * @property {Object} [requiredLimits=undefined] - Specifies the limits that are required by the device request. The request will fail if the adapter cannot provide these limits.
 	 * @property {GPUDevice} [device=undefined] - If there is an existing GPU device on app level, it can be passed to the renderer as a parameter.
@@ -305,8 +303,6 @@ class WebGPUBackend extends Backend {
 		};
 
 		this.device = device;
-
-		this.trackTimestamp = this.trackTimestamp && this.hasFeature( GPUFeatureName.TimestampQuery );
 
 		this.updateSize();
 
@@ -952,7 +948,8 @@ class WebGPUBackend extends Backend {
 
 		}
 
-		this.initTimestampQuery( TimestampQuery.RENDER, this.getTimestampUID( renderContext ), descriptor );
+		// passes write timestamps only while a GPU timer is active, see _setTimerQueries()
+		descriptor.timestampWrites = undefined;
 
 		descriptor.occlusionQuerySet = occlusionQuerySet;
 
@@ -1909,8 +1906,6 @@ class WebGPUBackend extends Backend {
 		_computePassDescriptor.label = label;
 		_commandEncoderDescriptor.label = label;
 
-		this.initTimestampQuery( TimestampQuery.COMPUTE, this.getTimestampUID( computeGroup ), _computePassDescriptor );
-
 		if ( this._activeTimers > 0 ) {
 
 			this._setTimerQueries( _computePassDescriptor );
@@ -2638,49 +2633,6 @@ class WebGPUBackend extends Backend {
 	async copyTextureToBuffer( texture, x, y, width, height, faceIndex ) {
 
 		return this.textureUtils.copyTextureToBuffer( texture, x, y, width, height, faceIndex );
-
-	}
-
-	/**
-	 * Inits a time stamp query for the given render context.
-	 *
-	 * @param {string} type - The type of the timestamp query (e.g. 'render', 'compute').
-	 * @param {number} uid - Unique id for the context (e.g. render context id).
-	 * @param {Object} descriptor - The query descriptor.
-	 */
-	initTimestampQuery( type, uid, descriptor ) {
-
-		// TODO: a pass can only write one set of timestamps, so passes inside a timer write to the timer
-		// queries and are missing from trackTimestamp. Remove once trackTimestamp is replaced by timers
-		if ( this._activeTimers > 0 ) {
-
-			return;
-
-		}
-
-		if ( ! this.trackTimestamp ) {
-
-			descriptor.timestampWrites = undefined;
-			return;
-
-		}
-
-		if ( ! this.timestampQueryPool[ type ] ) {
-
-			// TODO: Variable maxQueries?
-			this.timestampQueryPool[ type ] = new WebGPUTimestampQueryPool( this.device, type, 2048 );
-
-		}
-
-		const timestampQueryPool = this.timestampQueryPool[ type ];
-
-		const baseOffset = timestampQueryPool.allocateQueriesForContext( uid );
-
-		_renderPassTimestampWrites.querySet = timestampQueryPool.querySet;
-		_renderPassTimestampWrites.beginningOfPassWriteIndex = baseOffset;
-		_renderPassTimestampWrites.endOfPassWriteIndex = baseOffset + 1;
-
-		descriptor.timestampWrites = _renderPassTimestampWrites;
 
 	}
 

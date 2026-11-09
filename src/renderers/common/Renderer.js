@@ -3366,14 +3366,6 @@ class Renderer {
 
 	}
 
-	async resolveTimestampsAsync( type = 'render' ) {
-
-		if ( this._initialized === false ) await this.init();
-
-		return this.backend.resolveTimestampsAsync( type );
-
-	}
-
 	/**
 	 * Checks if the given feature is supported by the selected backend. If the
 	 * renderer has not been initialized, this method always returns `false`.

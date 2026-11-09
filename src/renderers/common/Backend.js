@@ -3,8 +3,8 @@ let _color4 = null;
 
 import Color4 from './Color4.js';
 import { Vector2 } from '../../math/Vector2.js';
-import { createCanvasElement, warnOnce } from '../../utils.js';
-import { REVISION, TimestampQuery } from '../../constants.js';
+import { createCanvasElement } from '../../utils.js';
+import { REVISION } from '../../constants.js';
 
 /**
  * Most of the rendering related logic is implemented in the
@@ -56,24 +56,6 @@ class Backend {
 		 * @default null
 		 */
 		this.domElement = null;
-
-		/**
-		 * A reference to the timestamp query pool.
-   		 *
-   		 * @type {{render: ?TimestampQueryPool, compute: ?TimestampQueryPool}}
-		 */
-		this.timestampQueryPool = {
-			[ TimestampQuery.RENDER ]: null,
-			[ TimestampQuery.COMPUTE ]: null
-		};
-
-		/**
-		 * Whether to track timestamps with a Timestamp Query API or not.
-		 *
-		 * @type {boolean}
-		 * @default false
-		 */
-		this.trackTimestamp = ( parameters.trackTimestamp === true );
 
 	}
 
@@ -562,49 +544,6 @@ class Backend {
 	}
 
 	/**
-	 * Returns all timestamp frames for the given type.
-	 *
-	 * @param {string} type - The type of the time stamp.
-	 * @return {Array<number>} The timestamp frames.
-	 */
-	getTimestampFrames( type ) {
-
-		const queryPool = this.timestampQueryPool[ type ];
-
-		return queryPool ? queryPool.getTimestampFrames() : [];
-
-	}
-
-	/**
-	 * Returns the query pool for the given uid.
-	 *
-	 * @param {string} uid - The unique identifier.
-	 * @return {TimestampQueryPool} The query pool.
-	 */
-	_getQueryPool( uid ) {
-
-		const type = uid.startsWith( 'c:' ) ? TimestampQuery.COMPUTE : TimestampQuery.RENDER;
-		const queryPool = this.timestampQueryPool[ type ];
-
-		return queryPool;
-
-	}
-
-	/**
-	 * Returns the timestamp for the given uid.
-	 *
-	 * @param {string} uid - The unique identifier.
-	 * @return {number} The timestamp.
-	 */
-	getTimestamp( uid ) {
-
-		const queryPool = this._getQueryPool( uid );
-
-		return queryPool.getTimestamp( uid );
-
-	}
-
-	/**
 	 * Whether the backend supports query timestamps or not.
 	 *
 	 * @type {boolean}
@@ -613,20 +552,6 @@ class Backend {
 	get hasTimestamp() {
 
 		return false;
-
-	}
-
-	/**
-	 * Returns `true` if a timestamp for the given uid is available.
-	 *
-	 * @param {string} uid - The unique identifier.
-	 * @return {boolean} Whether the timestamp is available or not.
-	 */
-	hasTimestampQuery( uid ) {
-
-		const queryPool = this._getQueryPool( uid );
-
-		return queryPool.hasTimestampQuery( uid );
 
 	}
 
@@ -690,39 +615,6 @@ class Backend {
 		}
 
 		return occlusionData;
-
-	}
-
-	/**
-	 * Resolves the time stamp for the given render context and type.
-	 *
-	 * @async
-	 * @abstract
-	 * @param {string} [type='render'] - The type of the time stamp.
-	 * @return {Promise<number>} A Promise that resolves with the time stamp.
-	 */
-	async resolveTimestampsAsync( type = 'render' ) {
-
-		if ( ! this.trackTimestamp ) {
-
-			warnOnce( 'WebGPURenderer: Timestamp tracking is disabled.' );
-			return;
-
-		}
-
-		const queryPool = this.timestampQueryPool[ type ];
-
-		if ( ! queryPool ) {
-
-			return;
-
-		}
-
-		const duration = await queryPool.resolveQueriesAsync();
-
-		this.renderer.info[ type ].timestamp = duration;
-
-		return duration;
 
 	}
 
@@ -923,19 +815,7 @@ class Backend {
 	 *
 	 * @abstract
 	 */
-	async dispose() {
-
-		for ( const queryPool of Object.values( this.timestampQueryPool ) ) {
-
-			if ( queryPool !== null ) {
-
-				await queryPool.dispose();
-
-			}
-
-		}
-
-	}
+	async dispose() { }
 
 }
 
