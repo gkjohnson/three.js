@@ -3,7 +3,7 @@ let _color4 = null;
 
 import Color4 from './Color4.js';
 import { Vector2 } from '../../math/Vector2.js';
-import { createCanvasElement } from '../../utils.js';
+import { createCanvasElement, warnOnce } from '../../utils.js';
 import { REVISION } from '../../constants.js';
 
 /**
@@ -32,6 +32,12 @@ class Backend {
 		 * @type {Object}
 		 */
 		this.parameters = Object.assign( {}, parameters );
+
+		if ( parameters.trackTimestamp !== undefined ) {
+
+			warnOnce( 'WebGPURenderer: "trackTimestamp" has been removed. Use "GPUTimer" instead.' ); // @deprecated r188
+
+		}
 
 		/**
 		 * This weak map holds backend-specific data of objects
